@@ -1,0 +1,3209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clone Club: Definitely Not My Homework</title>
+  <style>
+    :root {
+      --ink: #101827;
+      --panel: #fffdf5;
+      --paper: #f7f2df;
+      --line: #222;
+      --blue: #2563eb;
+      --green: #0f766e;
+      --pink: #db2777;
+      --yellow: #facc15;
+      --red: #dc2626;
+      --shadow: rgba(16, 24, 39, 0.22);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Courier New", Courier, monospace;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        radial-gradient(circle at 15% 15%, #fef08a 0, transparent 25%),
+        radial-gradient(circle at 90% 20%, #a7f3d0 0, transparent 24%),
+        linear-gradient(135deg, #1d4ed8, #7c3aed 45%, #0f766e);
+      background-size: 18px 18px, 18px 18px, auto, auto, auto;
+      padding: 18px;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .game-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      border: 4px solid var(--line);
+      background: var(--panel);
+      box-shadow: 10px 10px 0 rgba(0,0,0,.35);
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #111827;
+      color: #fefce8;
+      border-bottom: 4px solid var(--line);
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-size: clamp(1.15rem, 3vw, 2rem);
+      letter-spacing: 0;
+    }
+
+    .title-block p {
+      margin: 4px 0 0;
+      color: #d1fae5;
+      font-size: .9rem;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .language-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 18px 0;
+    }
+
+    .language-option {
+      position: relative;
+    }
+
+    .language-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .language-option span {
+      display: inline-block;
+      border: 3px solid #fefce8;
+      background: #1f2937;
+      color: #fefce8;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .language-option input:checked + span,
+    .language-option input:focus-visible + span {
+      background: #facc15;
+      color: #101827;
+      outline: 3px solid #fff;
+      outline-offset: 2px;
+    }
+
+    .pixel-button {
+      border: 3px solid var(--line);
+      background: var(--yellow);
+      color: var(--ink);
+      padding: 9px 12px;
+      min-height: 42px;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 rgba(0,0,0,.35);
+      font-weight: 700;
+    }
+
+    .pixel-button:hover,
+    .pixel-button:focus-visible {
+      transform: translate(-1px, -1px);
+      box-shadow: 5px 5px 0 rgba(0,0,0,.35);
+      outline: 3px solid #fff;
+      outline-offset: 2px;
+    }
+
+    .pixel-button.secondary {
+      background: #bae6fd;
+    }
+
+    .pixel-button.danger {
+      background: #fecdd3;
+    }
+
+    .pixel-button.sound {
+      background: #bbf7d0;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(280px, .9fr);
+      gap: 0;
+    }
+
+    .stage-area {
+      padding: 18px;
+      border-right: 4px solid var(--line);
+      background: var(--paper);
+    }
+
+    .side-panel {
+      display: grid;
+      grid-template-rows: auto auto auto 1fr;
+      background: #f8fafc;
+    }
+
+    .scene-card {
+      border: 4px solid var(--line);
+      background: #c7d2fe;
+      min-height: 485px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 4px rgba(255,255,255,.28);
+    }
+
+    .scene-sky {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(#93c5fd 0 28%, transparent 28%),
+        linear-gradient(#e5e7eb 0 29%, transparent 29%),
+        linear-gradient(#fef3c7 29% 100%);
+    }
+
+    .scene-floor {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 34%;
+      background:
+        repeating-linear-gradient(90deg, rgba(0,0,0,.08) 0 2px, transparent 2px 74px),
+        linear-gradient(135deg, #e2e8f0, #cbd5e1);
+      border-top: 4px solid var(--line);
+    }
+
+    .pixel-person {
+      position: absolute;
+      left: 48%;
+      bottom: 21%;
+      width: 58px;
+      height: 118px;
+      transform: translateX(-50%);
+      image-rendering: pixelated;
+    }
+
+    .head {
+      position: absolute;
+      left: 13px;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      background: #f6c7a9;
+      border: 4px solid var(--line);
+    }
+
+    .hair {
+      position: absolute;
+      left: 8px;
+      top: -4px;
+      width: 42px;
+      height: 16px;
+      background: #111827;
+      border: 4px solid var(--line);
+    }
+
+    .body {
+      position: absolute;
+      left: 8px;
+      top: 35px;
+      width: 42px;
+      height: 48px;
+      background: #22c55e;
+      border: 4px solid var(--line);
+    }
+
+    .legs {
+      position: absolute;
+      left: 10px;
+      top: 82px;
+      width: 38px;
+      height: 34px;
+      background:
+        linear-gradient(90deg, #1d4ed8 0 44%, transparent 44% 56%, #1d4ed8 56%);
+      border-bottom: 4px solid var(--line);
+    }
+
+    .eyes {
+      position: absolute;
+      left: 20px;
+      top: 13px;
+      width: 18px;
+      height: 5px;
+      background:
+        linear-gradient(90deg, #111 0 5px, transparent 5px 12px, #111 12px);
+      z-index: 3;
+    }
+
+    .room-prop {
+      position: absolute;
+      border: 4px solid var(--line);
+      background: #fff;
+      box-shadow: 5px 5px 0 rgba(0,0,0,.25);
+      cursor: pointer;
+      font: inherit;
+      color: var(--ink);
+      padding: 0;
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+
+    .room-prop:hover,
+    .room-prop:focus-visible {
+      background: #fef08a;
+      transform: translate(-2px, -2px);
+      box-shadow: 7px 7px 0 rgba(0,0,0,.28);
+      outline: 3px solid #111827;
+      outline-offset: 2px;
+    }
+
+    .prop-label {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: 8px;
+      text-align: center;
+      font-weight: 700;
+      font-size: .82rem;
+    }
+
+    .prop-a { left: 5%; bottom: 43%; width: 128px; height: 92px; }
+    .prop-b { right: 5%; bottom: 42%; width: 150px; height: 115px; }
+    .prop-c { left: 31%; top: 13%; width: 160px; height: 82px; }
+
+    .portal {
+      position: absolute;
+      right: 10%;
+      bottom: 27%;
+      width: 154px;
+      height: 188px;
+      border: 6px solid var(--line);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, #fff 0 10%, #67e8f9 10% 22%, #a78bfa 22% 36%, #db2777 36% 49%, #111827 49% 54%, #22c55e 54%);
+      box-shadow: 0 0 0 8px rgba(255,255,255,.3), 0 0 26px #a78bfa;
+      animation: wobble 1.3s infinite steps(2);
+    }
+
+    @keyframes wobble {
+      0%, 100% { transform: rotate(-2deg) scale(1); }
+      50% { transform: rotate(2deg) scale(1.03); }
+    }
+
+    .clone {
+      position: absolute;
+      left: 62%;
+      bottom: 21%;
+      width: 58px;
+      height: 118px;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity .2s ease;
+    }
+
+    .clone.visible { opacity: 1; }
+    .clone .body { background: #f97316; }
+    .clone .hair { background: #7c2d12; }
+
+    .npc-visual {
+      position: absolute;
+      bottom: 9%;
+      width: 54px;
+      height: 112px;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+      image-rendering: pixelated;
+      transition: transform .12s ease, filter .12s ease;
+      z-index: 4;
+    }
+
+    .npc-visual:hover,
+    .npc-visual:focus-visible {
+      transform: translateY(-4px);
+      filter: drop-shadow(4px 5px 0 rgba(0,0,0,.28));
+      outline: 3px solid #facc15;
+      outline-offset: 6px;
+    }
+
+    .npc-left { left: 22%; }
+    .npc-right { right: 18%; }
+
+    .npc-visual .npc-head,
+    .npc-visual .npc-hair,
+    .npc-visual .npc-body,
+    .npc-visual .npc-legs,
+    .npc-visual .npc-eyes {
+      position: absolute;
+      border: 3px solid var(--line);
+    }
+
+    .npc-visual .npc-head {
+      left: 12px;
+      top: 4px;
+      width: 30px;
+      height: 30px;
+      background: var(--npc-skin, #f6c7a9);
+    }
+
+    .npc-visual .npc-hair {
+      left: 8px;
+      top: 0;
+      width: 38px;
+      height: 14px;
+      background: var(--npc-hair, #111827);
+    }
+
+    .npc-visual .npc-body {
+      left: 8px;
+      top: 36px;
+      width: 38px;
+      height: 44px;
+      background: var(--npc-shirt, #38bdf8);
+    }
+
+    .npc-visual .npc-legs {
+      left: 10px;
+      top: 78px;
+      width: 34px;
+      height: 30px;
+      background:
+        linear-gradient(90deg, var(--npc-pants, #334155) 0 44%, transparent 44% 56%, var(--npc-pants, #334155) 56%);
+      border: 0;
+      border-bottom: 3px solid var(--line);
+    }
+
+    .npc-visual .npc-eyes {
+      left: 20px;
+      top: 17px;
+      width: 14px;
+      height: 4px;
+      border: 0;
+      background:
+        linear-gradient(90deg, #111 0 4px, transparent 4px 10px, #111 10px);
+      z-index: 2;
+    }
+
+    .npc-visual .npc-badge {
+      position: absolute;
+      left: 50%;
+      top: 110px;
+      transform: translateX(-50%);
+      min-width: 82px;
+      max-width: 118px;
+      border: 3px solid var(--line);
+      background: #fffdf5;
+      color: var(--ink);
+      padding: 4px 6px;
+      font-size: .72rem;
+      font-weight: 700;
+      line-height: 1.15;
+      box-shadow: 3px 3px 0 rgba(0,0,0,.2);
+      white-space: normal;
+    }
+
+    .npc-visual.robot .npc-head {
+      border-radius: 0;
+      background: #cbd5e1;
+    }
+
+    .npc-visual.robot .npc-hair {
+      left: 24px;
+      top: -8px;
+      width: 8px;
+      height: 12px;
+      background: #facc15;
+    }
+
+    .npc-visual.robot .npc-body {
+      background: #94a3b8;
+    }
+
+    .npc-visual.floaty {
+      animation: npcFloat 1.6s infinite steps(2);
+    }
+
+    .npc-visual.reacting {
+      animation: npcReact .42s steps(2);
+    }
+
+    @keyframes npcFloat {
+      0%, 100% { margin-bottom: 0; }
+      50% { margin-bottom: 8px; }
+    }
+
+    @keyframes npcReact {
+      0%, 100% { filter: none; }
+      50% { filter: drop-shadow(0 -8px 0 #facc15); }
+    }
+
+    .scene-title {
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      max-width: calc(100% - 24px);
+      background: #111827;
+      color: #fff;
+      border: 3px solid var(--line);
+      padding: 8px 10px;
+      font-weight: 700;
+      box-shadow: 4px 4px 0 rgba(0,0,0,.25);
+    }
+
+    .dialogue-box {
+      margin-top: 16px;
+      border: 4px solid var(--line);
+      background: #111827;
+      color: #fefce8;
+      padding: 14px;
+      min-height: 126px;
+      box-shadow: 6px 6px 0 rgba(0,0,0,.25);
+    }
+
+    .dialogue-box h2 {
+      margin: 0 0 8px;
+      color: #facc15;
+      font-size: 1rem;
+    }
+
+    .dialogue-box p {
+      margin: 0;
+      line-height: 1.45;
+      white-space: pre-line;
+    }
+
+    .choices {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .choice-button {
+      border: 2px solid #fefce8;
+      background: #1f2937;
+      color: #fff;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+
+    .choice-button:hover,
+    .choice-button:focus-visible {
+      background: #374151;
+      outline: 2px solid #facc15;
+      outline-offset: 2px;
+    }
+
+    .event-panel,
+    .meter-panel,
+    .inventory-panel,
+    .quest-panel,
+    .friend-panel,
+    .npc-panel,
+    .actions-panel {
+      padding: 14px;
+      border-bottom: 4px solid var(--line);
+    }
+
+    .actions-panel { border-bottom: 0; }
+
+    .panel-title {
+      margin: 0 0 10px;
+      color: #111827;
+      font-size: 1rem;
+      text-transform: uppercase;
+    }
+
+    .meter-row {
+      margin-bottom: 12px;
+    }
+
+    .meter-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: .86rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .meter {
+      height: 18px;
+      border: 3px solid var(--line);
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #22c55e, #facc15, #ef4444);
+      transition: width .2s ease;
+    }
+
+    .inventory {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 72px;
+    }
+
+    .quest-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .quest-list li {
+      border: 3px solid var(--line);
+      background: #fff;
+      padding: 8px 9px;
+      font-size: .84rem;
+      font-weight: 700;
+      box-shadow: 3px 3px 0 rgba(0,0,0,.16);
+    }
+
+    .quest-list li.done {
+      background: #dcfce7;
+      color: #14532d;
+      text-decoration: line-through;
+    }
+
+    .event-note,
+    .friend-list {
+      border: 3px solid var(--line);
+      background: #fff;
+      padding: 9px;
+      font-size: .84rem;
+      line-height: 1.35;
+      font-weight: 700;
+      box-shadow: 3px 3px 0 rgba(0,0,0,.16);
+    }
+
+    .friend-list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .friend-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .collectibles-note {
+      margin-top: 10px;
+      color: #475569;
+      font-size: .86rem;
+      line-height: 1.35;
+    }
+
+    .item-chip {
+      border: 3px solid var(--line);
+      background: #fff7ed;
+      padding: 7px 9px;
+      font-size: .84rem;
+      font-weight: 700;
+      box-shadow: 3px 3px 0 rgba(0,0,0,.18);
+    }
+
+    .empty-note {
+      color: #475569;
+      font-size: .9rem;
+      line-height: 1.4;
+    }
+
+    .action-list,
+    .npc-list,
+    .exit-list {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .small-button {
+      border: 3px solid var(--line);
+      background: #dbeafe;
+      padding: 10px;
+      text-align: left;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .small-button:hover,
+    .small-button:focus-visible {
+      background: #bfdbfe;
+      outline: 3px solid #facc15;
+      outline-offset: 2px;
+    }
+
+    .start-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background:
+        linear-gradient(rgba(17,24,39,.86), rgba(17,24,39,.86)),
+        repeating-linear-gradient(0deg, #0f172a 0 6px, #111827 6px 12px);
+    }
+
+    .start-card {
+      max-width: 760px;
+      border: 5px solid #fefce8;
+      background: #111827;
+      color: #fefce8;
+      padding: 28px;
+      box-shadow: 12px 12px 0 rgba(0,0,0,.5);
+    }
+
+    .start-card h2 {
+      margin: 0 0 10px;
+      color: #facc15;
+      font-size: clamp(2rem, 7vw, 4rem);
+      line-height: .95;
+    }
+
+    .start-card p,
+    .start-card li {
+      line-height: 1.55;
+    }
+
+    .start-card ul {
+      padding-left: 22px;
+    }
+
+    .hidden { display: none !important; }
+
+    .ending-card {
+      border: 4px solid var(--line);
+      background: #ecfeff;
+      padding: 16px;
+      margin-top: 16px;
+      box-shadow: 6px 6px 0 rgba(0,0,0,.22);
+    }
+
+    .ending-card h2 { margin: 0 0 8px; color: #0f766e; }
+    .ending-card p { margin: 0 0 10px; line-height: 1.55; }
+
+    .end-extras {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .end-extra-block {
+      border: 3px solid var(--line);
+      background: #fffdf5;
+      padding: 10px;
+      box-shadow: 4px 4px 0 rgba(0,0,0,.16);
+    }
+
+    .end-extra-block h3 {
+      margin: 0 0 8px;
+      font-size: .96rem;
+      color: #111827;
+    }
+
+    .museum-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    @media (max-width: 880px) {
+      body { padding: 10px; }
+      .layout { grid-template-columns: 1fr; }
+      .stage-area { border-right: 0; border-bottom: 4px solid var(--line); }
+      .top-bar { align-items: flex-start; flex-direction: column; }
+      .top-actions { justify-content: flex-start; }
+      .scene-card { min-height: 430px; }
+      .prop-a { left: 4%; bottom: 45%; width: 108px; height: 82px; }
+      .prop-b { right: 4%; bottom: 44%; width: 120px; height: 102px; }
+      .prop-c { left: 27%; top: 12%; width: 135px; }
+      .portal { width: 122px; height: 150px; }
+      .npc-visual { bottom: 8%; transform: scale(.86); transform-origin: bottom center; }
+      .npc-visual:hover,
+      .npc-visual:focus-visible { transform: translateY(-4px) scale(.86); }
+      .npc-left { left: 17%; }
+      .npc-right { right: 12%; }
+      .npc-visual .npc-badge {
+        top: 108px;
+        min-width: 74px;
+        max-width: 96px;
+        font-size: .66rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="startScreen" class="start-screen">
+    <div class="start-card">
+      <h2>Clone Club</h2>
+      <p><strong>Definitely Not My Homework</strong></p>
+      <p>You found a suspicious student-cloning device behind the cafeteria vending machine. Your plan: create a clone to handle school, homework, chores, and every group project where someone says "I will do the slides" and then vanishes.</p>
+      <p>The problem: the clone is too good at being you. It joins every club, starts optimizing your life, and accidentally opens a portal to the Dimension of Unfinished Assignments.</p>
+      <div class="language-picker" aria-label="Language">
+        <label class="language-option">
+          <input type="radio" name="gameLanguage" value="en" checked onchange="setLanguage(this.value)">
+          <span>English</span>
+        </label>
+        <label class="language-option">
+          <input type="radio" name="gameLanguage" value="es" onchange="setLanguage(this.value)">
+          <span>Español</span>
+        </label>
+        <label class="language-option">
+          <input type="radio" name="gameLanguage" value="zh" onchange="setLanguage(this.value)">
+          <span>中文</span>
+        </label>
+        <label class="language-option">
+          <input type="radio" name="gameLanguage" value="hi" onchange="setLanguage(this.value)">
+          <span>हिन्दी</span>
+        </label>
+        <label class="language-option">
+          <input type="radio" name="gameLanguage" value="pt" onchange="setLanguage(this.value)">
+          <span>Português</span>
+        </label>
+        <label class="language-option">
+          <input type="radio" name="gameLanguage" value="bn" onchange="setLanguage(this.value)">
+          <span>বাংলা</span>
+        </label>
+      </div>
+      <ul>
+        <li>Click room objects to investigate.</li>
+        <li>Collect items and use them in the right places.</li>
+        <li>Keep the Chaos Meter from maxing out.</li>
+      </ul>
+      <button class="pixel-button" type="button" onclick="startGame()">Start Adventure</button>
+    </div>
+  </div>
+
+  <div class="game-shell" id="gameShell" aria-label="Clone Club game">
+    <header class="top-bar">
+      <div class="title-block">
+        <h1 id="gameTitle">Clone Club: Definitely Not My Homework</h1>
+        <p>A school-safe retro adventure about shortcuts, weird science, and doing the one chore you were trying to avoid.</p>
+      </div>
+      <div class="top-actions">
+        <button class="pixel-button secondary" type="button" onclick="showHelp()">Help</button>
+        <button class="pixel-button sound" type="button" id="soundButton" onclick="toggleSound()">Sound</button>
+        <button class="pixel-button danger" type="button" onclick="resetGame()">Reset</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="stage-area">
+        <div class="scene-card" id="sceneCard">
+          <div class="scene-sky"></div>
+          <div class="scene-floor"></div>
+          <div class="scene-title" id="roomTitle">Loading...</div>
+          <button class="room-prop prop-a" id="propA" type="button"><span class="prop-label">PROP</span></button>
+          <button class="room-prop prop-b" id="propB" type="button"><span class="prop-label">PROP</span></button>
+          <button class="room-prop prop-c" id="propC" type="button"><span class="prop-label">PROP</span></button>
+          <div class="portal hidden" id="portalVisual" aria-hidden="true"></div>
+          <div class="pixel-person" aria-hidden="true">
+            <div class="hair"></div><div class="head"></div><div class="eyes"></div><div class="body"></div><div class="legs"></div>
+          </div>
+          <div class="clone" id="cloneVisual" aria-hidden="true">
+            <div class="hair"></div><div class="head"></div><div class="eyes"></div><div class="body"></div><div class="legs"></div>
+          </div>
+          <button class="npc-visual npc-left hidden" id="npcVisualA" type="button">
+            <span class="npc-badge"></span>
+            <span class="npc-hair"></span><span class="npc-head"></span><span class="npc-eyes"></span><span class="npc-body"></span><span class="npc-legs"></span>
+          </button>
+          <button class="npc-visual npc-right hidden" id="npcVisualB" type="button">
+            <span class="npc-badge"></span>
+            <span class="npc-hair"></span><span class="npc-head"></span><span class="npc-eyes"></span><span class="npc-body"></span><span class="npc-legs"></span>
+          </button>
+        </div>
+
+        <div class="dialogue-box" aria-live="polite">
+          <h2 id="speaker">Narrator</h2>
+          <p id="dialogue">Your locker hums suspiciously. That is rarely part of the school handbook.</p>
+          <div class="choices" id="choices"></div>
+        </div>
+        <div id="ending" class="ending-card hidden"></div>
+      </section>
+
+      <aside class="side-panel">
+        <section class="event-panel">
+          <h2 class="panel-title">School Event</h2>
+          <div class="event-note" id="eventNote">No event yet.</div>
+        </section>
+
+        <section class="meter-panel">
+          <h2 class="panel-title">Status</h2>
+          <div class="meter-row">
+            <div class="meter-label"><span>Chaos Meter</span><span id="chaosNumber">0/100</span></div>
+            <div class="meter"><div class="meter-fill" id="chaosFill"></div></div>
+          </div>
+          <div class="meter-row">
+            <div class="meter-label"><span>Homework Debt</span><span id="debtNumber">3/6</span></div>
+            <div class="meter"><div class="meter-fill" id="debtFill"></div></div>
+          </div>
+          <div class="meter-row">
+            <div class="meter-label"><span>Reputation</span><span id="repNumber">5/10</span></div>
+            <div class="meter"><div class="meter-fill" id="repFill"></div></div>
+          </div>
+          <div class="meter-row">
+            <div class="meter-label"><span>Clone Mood</span><span id="cloneMoodLabel">Not Created</span></div>
+            <div class="meter"><div class="meter-fill" id="cloneMoodFill"></div></div>
+          </div>
+        </section>
+
+        <section class="inventory-panel">
+          <h2 class="panel-title">Backpack</h2>
+          <div class="inventory" id="inventory"></div>
+        </section>
+
+        <section class="quest-panel">
+          <h2 class="panel-title">Quest Notebook</h2>
+          <ul class="quest-list" id="questList"></ul>
+          <div class="collectibles-note" id="collectiblesNote">Weird artifacts found: 0/5</div>
+        </section>
+
+        <section class="friend-panel">
+          <h2 class="panel-title">NPC Bonds</h2>
+          <div class="friend-list" id="friendList"></div>
+        </section>
+
+        <section class="actions-panel">
+          <h2 class="panel-title">People Nearby</h2>
+          <div class="npc-list" id="npcs"></div>
+          <h2 class="panel-title">Investigate</h2>
+          <div class="action-list" id="actions"></div>
+          <h2 class="panel-title">Go To</h2>
+          <div class="exit-list" id="exits"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const rooms = {
+      hallway: {
+        title: "Main Hallway",
+        color: "#bfdbfe",
+        props: ["Locker Wall", "Vending Machine", "Club Posters"],
+        exits: ["cafeteria", "library", "stemLab", "office"],
+        intro: "The hallway smells like floor wax, pencil shavings, and a tiny bit of panic. Your locker is buzzing like it has opinions.",
+        npcs: [
+          { name: "Maya", role: "Rumor Expert", talk: () => talkToNpc("maya") },
+          { name: "Mr. Bell", role: "Hall Monitor", talk: () => talkToNpc("bell") }
+        ],
+        actions: [
+          { label: "Open your buzzing locker", once: "lockerOpen", run: () => {
+            addItem("Mystery USB");
+            addDebt(1);
+            say("You", "Inside your locker is a USB labeled 'TOTALLY NORMAL STUDENT BACKUP.' Your homework folder is also in there, judging you.");
+          }},
+          { label: "Check the vending machine", once: "vendingChecked", run: () => {
+            addItem("Expired Pudding");
+            addChaos(4);
+            say("Vending Machine", "It coughs up a pudding cup from 2019 and displays: THANK YOU FOR YOUR BRAVERY.");
+          }},
+          { label: "Read the club posters", once: "postersRead", run: () => {
+            addItem("Motivational Poster");
+            addItem("Sticker Of Unclear Origin");
+            addRep(1);
+            say("Poster", "A glittery poster says: 'Be Yourself, Unless A Clone Has Better Time Management.' Behind it is a sticker that says simply: MOOD.");
+          }}
+        ]
+      },
+      cafeteria: {
+        title: "Cafeteria",
+        color: "#fde68a",
+        props: ["Mystery Lunch", "Table Of Legends", "Snack Cart"],
+        exits: ["hallway", "gym"],
+        intro: "The cafeteria is loud enough to make a spoon vibrate. Someone is trading fruit snacks like rare gemstones.",
+        npcs: [
+          { name: "Cafeteria Legend", role: "Snack Economist", talk: () => talkToNpc("legend") },
+          { name: "Nina", role: "Optimism Supplier", talk: () => talkToNpc("nina") }
+        ],
+        actions: [
+          { label: "Trade pudding for a favor", requires: "Expired Pudding", once: "tradePudding", run: () => {
+            removeItem("Expired Pudding");
+            addItem("Half-Charged Earbuds");
+            addRep(2);
+            say("Cafeteria Legend", "Respect. This pudding has vintage energy. Take these earbuds. One side works if you believe in it.");
+          }},
+          { label: "Ask about weird science rumors", once: "rumorAsked", run: () => {
+            addChaos(6);
+            say("Maya", "I heard the STEM lab has a machine that can duplicate anything, except cafeteria pizza. The pizza duplicates itself emotionally.");
+          }},
+          { label: "Eat mystery lunch", once: "ateLunch", run: () => {
+            addDebt(-1);
+            addChaos(5);
+            addItem("Legendary Spork");
+            say("Narrator", "You feel powerful, confused, and lightly carbonated. Your Homework Debt goes down because survival is educational. You also earn the Legendary Spork.");
+          }}
+        ]
+      },
+      library: {
+        title: "Library Media Center",
+        color: "#d9f99d",
+        props: ["Ancient Printer", "Research Desk", "Quiet Zone"],
+        exits: ["hallway", "stemLab"],
+        intro: "The library is peaceful, except for the printer, which sounds like it is trying to escape a haunted drawer.",
+        npcs: [
+          { name: "Ms. Quill", role: "Librarian Of Calm", talk: () => talkToNpc("quill") },
+          { name: "Printer", role: "Paper Menace", talk: () => talkToNpc("printer") }
+        ],
+        actions: [
+          { label: "Search for cloning manuals", once: "manualFound", run: () => {
+            addItem("Cloning Manual");
+            say("Search Results", "You find 'Clone Machines For People Who Definitely Read Instructions.' The first chapter is just the word DON'T repeated 48 times.");
+          }},
+          { label: "Print emergency checklist", once: "checklistPrinted", run: () => {
+            addItem("Portal Checklist");
+            addDebt(1);
+            addItem("Printer Gobbledygook");
+            say("Printer", "After a dramatic jam, the printer gives you a checklist: battery, USB, poster, and something sticky enough to hold reality together. It also prints a page that just says BEEP in twelve fonts.");
+          }},
+          { label: "Practice responsible decision-making", once: "responsibleMoment", run: () => {
+            addRep(1);
+            addChaos(-4);
+            say("You", "You take a deep breath and admit that maybe a clone should not be your entire life plan. Growth! Slightly annoying, but growth.");
+          }}
+        ]
+      },
+      stemLab: {
+        title: "STEM Lab",
+        color: "#c4b5fd",
+        props: ["Clone Machine", "Battery Drawer", "Portal Sensors"],
+        exits: ["hallway", "library", "dimension"],
+        intro: "The STEM lab contains wires, goggles, robots, and a machine labeled 'DO NOT USE FOR HOMEWORK AVOIDANCE.'",
+        npcs: [
+          { name: "Dr. Circuit", role: "Science Teacher", talk: () => talkToNpc("circuit") },
+          { name: "Lab Robot B-12", role: "Tiny Rule Enforcer", talk: () => talkToNpc("robot") }
+        ],
+        actions: [
+          { label: "Open the battery drawer", once: "batteryFound", run: () => {
+            addItem("Mega Battery");
+            say("Narrator", "You find a battery the size of a sandwich. It says: 'May cause ambition, portals, or extra credit.'");
+          }},
+          { label: "Activate clone machine", run: () => activateClone() },
+          { label: "Stabilize the portal", run: () => stabilizePortal() }
+        ]
+      },
+      gym: {
+        title: "Gym",
+        color: "#fecdd3",
+        props: ["Bleachers", "Lost And Found", "Dodgeball Bin"],
+        exits: ["cafeteria", "office"],
+        intro: "The gym smells like sneakers and heroic overconfidence. The lost and found has achieved sentience.",
+        npcs: [
+          { name: "Coach Whistle", role: "Advice At Full Volume", talk: () => talkToNpc("coach") },
+          { name: "Sam", role: "Dodgeball Witness", talk: () => talkToNpc("sam") }
+        ],
+        actions: [
+          { label: "Search lost and found", once: "glitterFound", run: () => {
+            addItem("Glitter Glue");
+            addItem("Ancient Calculator Battery");
+            addChaos(3);
+            say("Lost And Found", "You find glitter glue, three identical hoodies, a recorder flute nobody will claim, and a calculator battery older than the school website.");
+          }},
+          { label: "Ask gym teacher for advice", once: "coachAdvice", run: () => {
+            addRep(1);
+            say("Coach", "When life opens a portal, stretch first. Also, stop letting machines do your responsibilities.");
+          }},
+          { label: "Attempt dramatic dodgeball roll", once: "dodgeRoll", run: () => {
+            addChaos(8);
+            addRep(-1);
+            say("Narrator", "You roll two feet, knock over a cone, and somehow become a rumor by lunch.");
+          }}
+        ]
+      },
+      office: {
+        title: "Front Office",
+        color: "#fed7aa",
+        props: ["Attendance Desk", "Principal Door", "Form Rack"],
+        exits: ["hallway", "gym"],
+        intro: "The front office is calm in a way that makes you want to confess things you have not done yet.",
+        npcs: [
+          { name: "Principal Fern", role: "Kind But Tired", talk: () => talkToNpc("principal") },
+          { name: "Office Assistant", role: "Form Wizard", talk: () => talkToNpc("assistant") }
+        ],
+        actions: [
+          { label: "Ask for a late slip", once: "lateSlip", run: () => {
+            addItem("Official-Looking Form");
+            addRep(1);
+            say("Office Assistant", "This form is for ordinary lateness, not clone-related lateness. But honestly, I have seen weirder before third period.");
+          }},
+          { label: "Tell the truth about the clone", once: "truthTold", run: () => {
+            addRep(2);
+            addChaos(-6);
+            say("Principal", "I appreciate the honesty. Please do not outsource your homework to experimental technology. Also, impressive initiative.");
+          }},
+          { label: "Pretend everything is normal", once: "pretendNormal", run: () => {
+            addChaos(6);
+            say("You", "You smile too hard. The office plant wilts from the awkwardness.");
+          }}
+        ]
+      },
+      dimension: {
+        title: "Dimension Of Unfinished Assignments",
+        color: "#99f6e4",
+        props: ["Floating Rubrics", "Essay Fog", "Snack Nebula"],
+        exits: ["stemLab"],
+        intro: "Loose worksheets drift through the air. A giant rubric whispers, 'Needs more evidence.' Your clone is somewhere nearby, optimizing too hard.",
+        npcs: [
+          { name: "Rubric Wisp", role: "Feedback Cloud", talk: () => talkToNpc("rubric") },
+          { name: "Snack Nebula", role: "Cosmic Vending Mood", talk: () => talkToNpc("nebula") }
+        ],
+        actions: [
+          { label: "Talk to your clone", run: () => talkToClone() },
+          { label: "Collect extra-credit crystal", once: "crystalFound", run: () => {
+            addItem("Extra-Credit Crystal");
+            addDebt(-2);
+            addChaos(6);
+            say("Narrator", "The crystal hums with academic power. You immediately understand fractions, then forget why you came in here.");
+          }},
+          { label: "Organize the floating homework", once: "homeworkSorted", run: () => {
+            addDebt(-2);
+            addRep(1);
+            addChaos(-5);
+            addItem("Hallway Cheese Puff");
+            say("You", "You sort the floating assignments by due date. The dimension respects a good folder system and rewards you with one impossible cheese puff.");
+          }}
+        ]
+      }
+    };
+
+    const roomText = {
+      en: {},
+      es: {
+        hallway: {
+          title: "Pasillo Principal",
+          props: ["Pared de Casilleros", "Máquina Expendedora", "Carteles de Clubes"],
+          intro: "El pasillo huele a cera para pisos, virutas de lápiz y un poquito de pánico. Tu casillero zumba como si tuviera opiniones."
+        },
+        cafeteria: {
+          title: "Cafetería",
+          props: ["Almuerzo Misterioso", "Mesa De Leyendas", "Carrito De Bocadillos"],
+          intro: "La cafetería es tan ruidosa que hace vibrar una cuchara. Alguien cambia gomitas de fruta como si fueran gemas raras."
+        },
+        library: {
+          title: "Biblioteca",
+          props: ["Impresora Antigua", "Mesa De Investigación", "Zona Silenciosa"],
+          intro: "La biblioteca está tranquila, excepto por la impresora, que suena como si intentara escapar de un cajón embrujado."
+        },
+        stemLab: {
+          title: "Laboratorio STEM",
+          props: ["Máquina De Clones", "Cajón De Baterías", "Sensores Del Portal"],
+          intro: "El laboratorio STEM tiene cables, gafas, robots y una máquina con una etiqueta que dice: NO USAR PARA EVITAR TAREA."
+        },
+        gym: {
+          title: "Gimnasio",
+          props: ["Gradas", "Objetos Perdidos", "Cesto De Balones"],
+          intro: "El gimnasio huele a tenis y exceso de confianza heroica. Los objetos perdidos han logrado conciencia propia."
+        },
+        office: {
+          title: "Oficina Principal",
+          props: ["Mostrador De Asistencia", "Puerta De La Directora", "Estante De Formularios"],
+          intro: "La oficina está tan tranquila que dan ganas de confesar cosas que todavía no has hecho."
+        },
+        dimension: {
+          title: "Dimensión De Tareas Sin Terminar",
+          props: ["Rúbricas Flotantes", "Niebla De Ensayos", "Nebulosa De Bocadillos"],
+          intro: "Hojas sueltas flotan en el aire. Una rúbrica gigante susurra: 'Necesita más evidencia.' Tu clon está cerca, optimizando demasiado."
+        }
+      }
+    };
+
+    const itemNames = {
+      "Mystery USB": "Mystery USB",
+      "Expired Pudding": "Expired Pudding",
+      "Motivational Poster": "Motivational Poster",
+      "Half-Charged Earbuds": "Half-Charged Earbuds",
+      "Cloning Manual": "Cloning Manual",
+      "Portal Checklist": "Portal Checklist",
+      "Mega Battery": "Mega Battery",
+      "Glitter Glue": "Glitter Glue",
+      "Official-Looking Form": "Official-Looking Form",
+      "Extra-Credit Crystal": "Extra-Credit Crystal",
+      "Sticker Of Unclear Origin": "Sticker Of Unclear Origin",
+      "Legendary Spork": "Legendary Spork",
+      "Printer Gobbledygook": "Printer Gobbledygook",
+      "Ancient Calculator Battery": "Ancient Calculator Battery",
+      "Hallway Cheese Puff": "Hallway Cheese Puff"
+    };
+
+    const itemText = {
+      es: {
+        "Mystery USB": "USB Misteriosa",
+        "Expired Pudding": "Pudín Vencido",
+        "Motivational Poster": "Cartel Motivacional",
+        "Half-Charged Earbuds": "Audífonos Medio Cargados",
+        "Cloning Manual": "Manual De Clonación",
+        "Portal Checklist": "Lista Del Portal",
+        "Mega Battery": "Mega Batería",
+        "Glitter Glue": "Pegamento Con Brillantina",
+        "Official-Looking Form": "Formulario Casi Oficial",
+        "Extra-Credit Crystal": "Cristal De Crédito Extra",
+        "Sticker Of Unclear Origin": "Calcomanía De Origen Dudoso",
+        "Legendary Spork": "Cuchador Legendario",
+        "Printer Gobbledygook": "Galimatías De Impresora",
+        "Ancient Calculator Battery": "Batería Antigua De Calculadora",
+        "Hallway Cheese Puff": "Bolita De Queso Del Pasillo",
+        "Snack Treaty Receipt": "Recibo Del Tratado De Bocadillos",
+        "Emergency Cracker": "Galleta De Emergencia",
+        "Printer Encouragement Slip": "Nota De Ánimo De La Impresora",
+        "Borrowed Office Pen": "Bolígrafo Prestado De La Oficina",
+        "Cosmic Raisin": "Pasa Cósmica"
+      }
+    };
+
+    const collectibleItems = [
+      "Sticker Of Unclear Origin",
+      "Legendary Spork",
+      "Printer Gobbledygook",
+      "Ancient Calculator Battery",
+      "Hallway Cheese Puff"
+    ];
+
+    const questSteps = [
+      { label: "Find the suspicious clone-machine supplies", done: () => hasItem("Mystery USB") && hasItem("Mega Battery") && hasItem("Cloning Manual") },
+      { label: "Create the clone without immediately panicking", done: () => state.cloneActive },
+      { label: "Enter the Dimension of Unfinished Assignments", done: () => state.flags.visitedDimension },
+      { label: "Convince the clone to be a helper, not a replacement", done: () => state.flags.cloneConvinced },
+      { label: "Stabilize the portal before the school becomes homework soup", done: () => state.gameOver && state.flags.portalStabilized }
+    ];
+
+    const state = {
+      room: "hallway",
+      inventory: [],
+      flags: {},
+      chaos: 12,
+      debt: 3,
+      rep: 5,
+      cloneMood: 0,
+      cloneActive: false,
+      portalOpen: false,
+      gameOver: false,
+      plotWobbles: 0,
+      runVibe: "unassigned",
+      language: "en",
+      soundOn: false,
+      schoolEvent: "none",
+      affinity: {},
+      lastNpc: "",
+      portalPuzzleSolved: false
+    };
+
+    const runVibes = [
+      "cosmic folder tabs",
+      "auditorium nacho energy",
+      "brave little spreadsheet",
+      "mysterious hallway confidence",
+      "emergency glitter optimism"
+    ];
+
+    const runVibeText = {
+      es: {
+        "cosmic folder tabs": "pestañas de carpeta cósmicas",
+        "auditorium nacho energy": "energía de nachos del auditorio",
+        "brave little spreadsheet": "pequeña hoja de cálculo valiente",
+        "mysterious hallway confidence": "confianza misteriosa del pasillo",
+        "emergency glitter optimism": "optimismo de brillantina de emergencia"
+      },
+      zh: {
+        "cosmic folder tabs": "宇宙文件夹标签",
+        "auditorium nacho energy": "礼堂玉米片能量",
+        "brave little spreadsheet": "勇敢的小电子表格",
+        "mysterious hallway confidence": "神秘走廊自信",
+        "emergency glitter optimism": "紧急闪粉乐观"
+      },
+      hi: {
+        "cosmic folder tabs": "ब्रह्मांडीय फोल्डर टैब्स",
+        "auditorium nacho energy": "ऑडिटोरियम नाचो ऊर्जा",
+        "brave little spreadsheet": "बहादुर छोटी स्प्रेडशीट",
+        "mysterious hallway confidence": "रहस्यमय गलियारा आत्मविश्वास",
+        "emergency glitter optimism": "आपातकालीन चमकदार आशावाद"
+      },
+      pt: {
+        "cosmic folder tabs": "abas cósmicas de pasta",
+        "auditorium nacho energy": "energia de nachos do auditório",
+        "brave little spreadsheet": "pequena planilha corajosa",
+        "mysterious hallway confidence": "confiança misteriosa do corredor",
+        "emergency glitter optimism": "otimismo emergencial com glitter"
+      },
+      bn: {
+        "cosmic folder tabs": "মহাজাগতিক ফোল্ডার ট্যাব",
+        "auditorium nacho energy": "অডিটোরিয়াম নাচো শক্তি",
+        "brave little spreadsheet": "সাহসী ছোট স্প্রেডশিট",
+        "mysterious hallway confidence": "রহস্যময় করিডর আত্মবিশ্বাস",
+        "emergency glitter optimism": "জরুরি গ্লিটার আশাবাদ"
+      }
+    };
+
+    const schoolEvents = ["spiritDay", "popQuizFog", "pizzaIncident", "printerInCharge"];
+
+    const featureText = {
+      en: {
+        soundOn: "Sound On", soundOff: "Sound Off", schoolEvent: "School Event", npcBonds: "NPC Bonds",
+        noBonds: "Talk to people to build tiny, suspiciously wholesome bonds.",
+        bondLabel: score => score > 2 ? "trusted" : score > 0 ? "friendly" : score < 0 ? "strained" : "new",
+        museumTitle: "Weird Museum", reportTitle: "End-Game Report Card", noneFound: "No artifacts found yet. The museum is just a table looking hopeful.",
+        chaosGrade: "Chaos Management", snackGrade: "Snack Diplomacy", boundaryGrade: "Clone Boundaries", homeworkGrade: "Homework Recovery",
+        portalPuzzleTitle: "Portal Patch Puzzle", portalPuzzlePrompt: "The portal flashes three labels. Pick the stabilizer plan that sounds least like a cafeteria accident.",
+        portalChoiceGood: "Checklist, glitter glue, poster, then breathe",
+        portalChoiceSilly: "Spork, pudding, dramatic roll",
+        portalChoiceSnack: "Earbuds, cheese puff, emotional nachos",
+        portalPuzzleWin: "The portal accepts your careful plan. Even reality appreciates a checklist.",
+        portalPuzzleMiss: "The portal coughs glitter. Close, but not quite. Try the plan with fewer snacks.",
+        events: {
+          none: "No event yet.",
+          spiritDay: "Spirit Day: encouragement travels faster. NPC bonds grow a little more easily.",
+          popQuizFog: "Pop Quiz Fog: homework feels heavier, but careful choices matter more.",
+          pizzaIncident: "Pizza Incident: snack diplomacy is unusually powerful today.",
+          printerInCharge: "Printer In Charge: random paperwork may reduce chaos if you stay calm."
+        }
+      },
+      es: {
+        soundOn: "Sonido Sí", soundOff: "Sonido No", schoolEvent: "Evento Escolar", npcBonds: "Vínculos De Personajes",
+        noBonds: "Habla con la gente para crear vínculos pequeños y sospechosamente sanos.",
+        bondLabel: score => score > 2 ? "de confianza" : score > 0 ? "amistoso" : score < 0 ? "tenso" : "nuevo",
+        museumTitle: "Museo Raro", reportTitle: "Boleta Final", noneFound: "Aún no hay artefactos. El museo es solo una mesa con esperanza.",
+        chaosGrade: "Manejo Del Caos", snackGrade: "Diplomacia De Bocadillos", boundaryGrade: "Límites Del Clon", homeworkGrade: "Recuperación De Tarea",
+        portalPuzzleTitle: "Rompecabezas Del Portal", portalPuzzlePrompt: "El portal muestra tres etiquetas. Elige el plan estabilizador que menos parezca accidente de cafetería.",
+        portalChoiceGood: "Lista, brillantina, cartel y respirar",
+        portalChoiceSilly: "Cuchador, pudín y rodada dramática",
+        portalChoiceSnack: "Audífonos, bolita de queso y nachos emocionales",
+        portalPuzzleWin: "El portal acepta tu plan cuidadoso. Hasta la realidad aprecia una lista.",
+        portalPuzzleMiss: "El portal tose brillantina. Cerca, pero no. Prueba el plan con menos bocadillos.",
+        events: {
+          none: "Aún no hay evento.",
+          spiritDay: "Día de espíritu: el ánimo viaja más rápido. Los vínculos con personajes crecen con más facilidad.",
+          popQuizFog: "Niebla de examen sorpresa: la tarea pesa más, pero las buenas decisiones importan.",
+          pizzaIncident: "Incidente de pizza: la diplomacia de bocadillos tiene poder extra.",
+          printerInCharge: "La impresora manda: el papeleo puede bajar el caos si mantienes la calma."
+        }
+      },
+      zh: {
+        soundOn: "声音开", soundOff: "声音关", schoolEvent: "学校事件", npcBonds: "角色关系",
+        noBonds: "和大家聊天，建立小小的、可疑地温暖的关系。",
+        bondLabel: score => score > 2 ? "信任" : score > 0 ? "友好" : score < 0 ? "紧张" : "新认识",
+        museumTitle: "怪东西博物馆", reportTitle: "结局成绩单", noneFound: "还没有文物。博物馆只是一张充满希望的桌子。",
+        chaosGrade: "混乱管理", snackGrade: "零食外交", boundaryGrade: "克隆边界", homeworkGrade: "作业恢复",
+        portalPuzzleTitle: "传送门修补谜题", portalPuzzlePrompt: "传送门闪出三个标签。选择最不像食堂事故的稳定计划。",
+        portalChoiceGood: "清单、闪粉胶、海报，然后呼吸",
+        portalChoiceSilly: "叉勺、布丁、戏剧性翻滚",
+        portalChoiceSnack: "耳机、芝士球、情绪玉米片",
+        portalPuzzleWin: "传送门接受了你的谨慎计划。连现实都欣赏清单。",
+        portalPuzzleMiss: "传送门咳出闪粉。差一点。试试零食少一点的计划。",
+        events: {
+          none: "还没有事件。",
+          spiritDay: "精神日：鼓励传播得更快。角色关系更容易提升。",
+          popQuizFog: "突击测验雾：作业更重，但谨慎选择更重要。",
+          pizzaIncident: "披萨事件：零食外交今天特别有力量。",
+          printerInCharge: "打印机掌权：保持冷静时，随机文书可能降低混乱。"
+        }
+      },
+      hi: {
+        soundOn: "ध्वनि चालू", soundOff: "ध्वनि बंद", schoolEvent: "स्कूल घटना", npcBonds: "पात्र रिश्ते",
+        noBonds: "लोगों से बात करो और छोटे, अजीब तरह से प्यारे रिश्ते बनाओ।",
+        bondLabel: score => score > 2 ? "भरोसेमंद" : score > 0 ? "दोस्ताना" : score < 0 ? "तनावपूर्ण" : "नया",
+        museumTitle: "अजीब संग्रहालय", reportTitle: "अंतिम रिपोर्ट कार्ड", noneFound: "अभी कोई वस्तु नहीं मिली। संग्रहालय बस उम्मीद भरी मेज है।",
+        chaosGrade: "कैओस प्रबंधन", snackGrade: "स्नैक कूटनीति", boundaryGrade: "क्लोन सीमाएँ", homeworkGrade: "होमवर्क सुधार",
+        portalPuzzleTitle: "पोर्टल पैच पहेली", portalPuzzlePrompt: "पोर्टल तीन लेबल चमकाता है। वह योजना चुनो जो कैफेटेरिया हादसा सबसे कम लगे।",
+        portalChoiceGood: "चेकलिस्ट, ग्लिटर ग्लू, पोस्टर, फिर सांस",
+        portalChoiceSilly: "स्पॉर्क, पुडिंग, नाटकीय रोल",
+        portalChoiceSnack: "ईयरबड्स, चीज पफ, भावनात्मक नाचोज",
+        portalPuzzleWin: "पोर्टल तुम्हारी सावधान योजना स्वीकार करता है। वास्तविकता भी चेकलिस्ट की कद्र करती है।",
+        portalPuzzleMiss: "पोर्टल चमक खांसता है। करीब था। कम स्नैक्स वाली योजना आजमाओ।",
+        events: {
+          none: "अभी कोई घटना नहीं।",
+          spiritDay: "स्पिरिट डे: प्रोत्साहन तेज चलता है। पात्र रिश्ते आसानी से बढ़ते हैं।",
+          popQuizFog: "पॉप क्विज धुंध: होमवर्क भारी लगता है, पर सावधान फैसले ज्यादा मायने रखते हैं।",
+          pizzaIncident: "पिज्जा घटना: स्नैक कूटनीति आज ज्यादा शक्तिशाली है।",
+          printerInCharge: "प्रिंटर प्रभारी: शांत रहने पर कागजी काम कैओस घटा सकता है।"
+        }
+      },
+      pt: {
+        soundOn: "Som Ligado", soundOff: "Som Desligado", schoolEvent: "Evento Escolar", npcBonds: "Laços Com Personagens",
+        noBonds: "Converse com pessoas para criar laços pequenos e suspeitosamente fofos.",
+        bondLabel: score => score > 2 ? "confiável" : score > 0 ? "amigável" : score < 0 ? "tenso" : "novo",
+        museumTitle: "Museu Esquisito", reportTitle: "Boletim Final", noneFound: "Nenhum artefato ainda. O museu é só uma mesa esperançosa.",
+        chaosGrade: "Gestão Do Caos", snackGrade: "Diplomacia De Lanches", boundaryGrade: "Limites Do Clone", homeworkGrade: "Recuperação Do Dever",
+        portalPuzzleTitle: "Quebra-Cabeça Do Portal", portalPuzzlePrompt: "O portal pisca três rótulos. Escolha o plano que menos parece acidente de cafeteria.",
+        portalChoiceGood: "Checklist, glitter, cartaz, depois respirar",
+        portalChoiceSilly: "Spork, pudim, rolamento dramático",
+        portalChoiceSnack: "Fones, salgadinho, nachos emocionais",
+        portalPuzzleWin: "O portal aceita seu plano cuidadoso. Até a realidade aprecia uma checklist.",
+        portalPuzzleMiss: "O portal tosse glitter. Quase. Tente o plano com menos lanches.",
+        events: {
+          none: "Nenhum evento ainda.",
+          spiritDay: "Dia do espírito: incentivo viaja mais rápido. Laços com personagens crescem mais fácil.",
+          popQuizFog: "Névoa de prova surpresa: o dever pesa mais, mas escolhas cuidadosas importam.",
+          pizzaIncident: "Incidente da pizza: diplomacia de lanches está mais forte hoje.",
+          printerInCharge: "Impressora no comando: papelada aleatória pode reduzir o caos se você ficar calmo."
+        }
+      },
+      bn: {
+        soundOn: "শব্দ চালু", soundOff: "শব্দ বন্ধ", schoolEvent: "স্কুল ঘটনা", npcBonds: "চরিত্র সম্পর্ক",
+        noBonds: "মানুষের সাথে কথা বলে ছোট, সন্দেহজনকভাবে মিষ্টি সম্পর্ক গড়ো।",
+        bondLabel: score => score > 2 ? "বিশ্বাসী" : score > 0 ? "বন্ধুত্বপূর্ণ" : score < 0 ? "টানাপোড়েন" : "নতুন",
+        museumTitle: "অদ্ভুত জাদুঘর", reportTitle: "শেষের রিপোর্ট কার্ড", noneFound: "এখনও কোনো বস্তু নেই। জাদুঘর শুধু আশাবাদী একটি টেবিল।",
+        chaosGrade: "কেওস ব্যবস্থাপনা", snackGrade: "স্ন্যাক কূটনীতি", boundaryGrade: "ক্লোনের সীমা", homeworkGrade: "হোমওয়ার্ক পুনরুদ্ধার",
+        portalPuzzleTitle: "পোর্টাল প্যাচ ধাঁধা", portalPuzzlePrompt: "পোর্টাল তিনটি লেবেল দেখায়। যে পরিকল্পনাটি ক্যাফেটেরিয়া দুর্ঘটনা কম শোনায় সেটি বেছে নাও।",
+        portalChoiceGood: "চেকলিস্ট, গ্লিটার গ্লু, পোস্টার, তারপর শ্বাস",
+        portalChoiceSilly: "স্পর্ক, পুডিং, নাটকীয় রোল",
+        portalChoiceSnack: "ইয়ারবাড, চিজ পাফ, আবেগী নাচোস",
+        portalPuzzleWin: "পোর্টাল তোমার সাবধানী পরিকল্পনা মেনে নেয়। বাস্তবতাও চেকলিস্ট পছন্দ করে।",
+        portalPuzzleMiss: "পোর্টাল গ্লিটার কাশে। কাছাকাছি ছিল। কম স্ন্যাকওয়ালা পরিকল্পনা চেষ্টা করো।",
+        events: {
+          none: "এখনও কোনো ঘটনা নেই।",
+          spiritDay: "স্পিরিট ডে: উৎসাহ দ্রুত ছড়ায়। চরিত্র সম্পর্ক সহজে বাড়ে।",
+          popQuizFog: "পপ কুইজ কুয়াশা: হোমওয়ার্ক ভারী লাগে, কিন্তু সাবধানী সিদ্ধান্ত বেশি গুরুত্বপূর্ণ।",
+          pizzaIncident: "পিজা ঘটনা: স্ন্যাক কূটনীতি আজ বেশি শক্তিশালী।",
+          printerInCharge: "প্রিন্টার দায়িত্বে: শান্ত থাকলে এলোমেলো কাগজপত্র কেওস কমাতে পারে।"
+        }
+      }
+    };
+
+    const encouragements = [
+      "Tiny progress still counts. Even the portal had to start as one bad idea.",
+      "You are allowed to improvise, learn, and still be the main character.",
+      "Responsible choices are rarely dramatic, but they do make reality less crunchy.",
+      "Asking for help is not a shortcut. It is a very underrated superpower.",
+      "You can make a mess and still become the person who cleans it up."
+    ];
+
+    const encouragementText = {
+      es: [
+        "El progreso pequeño también cuenta. Hasta el portal tuvo que empezar como una mala idea.",
+        "Puedes improvisar, aprender y seguir siendo la persona protagonista.",
+        "Las decisiones responsables no siempre son dramáticas, pero hacen que la realidad cruja menos.",
+        "Pedir ayuda no es un atajo. Es un superpoder muy subestimado.",
+        "Puedes hacer un desastre y aun así convertirte en quien lo arregla."
+      ]
+    };
+
+    const uiText = {
+      en: {
+        startTitle: "Clone Club",
+        gameTitle: "Clone Club: Definitely Not My Homework",
+        startSubtitle: "Definitely Not My Homework",
+        startP1: "You found a suspicious student-cloning device behind the cafeteria vending machine. Your plan: create a clone to handle school, homework, chores, and every group project where someone says \"I will do the slides\" and then vanishes.",
+        startP2: "The problem: the clone is too good at being you. It joins every club, starts optimizing your life, and accidentally opens a portal to the Dimension of Unfinished Assignments.",
+        startLi1: "Click room objects to investigate.",
+        startLi2: "Collect items and use them in the right places.",
+        startLi3: "Keep the Chaos Meter from maxing out.",
+        startButton: "Start Adventure",
+        subtitle: "A school-safe retro adventure about shortcuts, weird science, and doing the one chore you were trying to avoid.",
+        help: "Help",
+        reset: "Reset",
+        status: "Status",
+        chaos: "Chaos Meter",
+        debt: "Homework Debt",
+        rep: "Reputation",
+        cloneMood: "Clone Mood",
+        backpack: "Backpack",
+        questNotebook: "Quest Notebook",
+        peopleNearby: "People Nearby",
+        investigate: "Investigate",
+        goTo: "Go To",
+        emptyBackpack: "Backpack contains: lint, one bent pencil, and confidence of uncertain origin.",
+        artifacts: count => "Weird artifacts found: " + count + "/" + collectibleItems.length,
+        done: "DONE: ",
+        todo: "TODO: ",
+        notCreated: "Not Created",
+        tooEfficient: "Too Efficient",
+        helpful: "Helpful",
+        unstable: "Unstable",
+        startIntro: room => room + " Today's invisible game flavor: " + runVibeLabel() + ".",
+        helpText: "Goal: follow the Quest Notebook. Click scene objects or investigation buttons, collect supplies, create the clone, enter the dimension, negotiate boundaries, and stabilize the portal. Optional weird artifacts can unlock a better ending.",
+        alreadyHandled: "You already handled that. Your future clone is proud of your efficient clicking.",
+        needItem: item => "You need " + displayItem(item) + " before that plan can become a regrettable success.",
+        noPortal: "The portal is not open yet. For now, the Dimension of Unfinished Assignments remains just a feeling in your backpack.",
+        nothingUseful: "There is nothing useful there, which has never stopped you before.",
+        optimisticSubtitle: "A tiny optimistic subtitle appears in the air: "
+      },
+      es: {
+        startTitle: "Clone Club",
+        gameTitle: "Clone Club: Definitivamente No Es Mi Tarea",
+        startSubtitle: "Definitivamente No Es Mi Tarea",
+        startP1: "Encontraste un aparato sospechoso para clonar estudiantes detrás de la máquina expendedora de la cafetería. Tu plan: crear un clon para encargarse de la escuela, la tarea, los quehaceres y todo proyecto grupal donde alguien dice \"yo hago las diapositivas\" y luego desaparece.",
+        startP2: "El problema: el clon es demasiado bueno siendo tú. Se une a todos los clubes, empieza a optimizar tu vida y accidentalmente abre un portal a la Dimensión De Tareas Sin Terminar.",
+        startLi1: "Haz clic en objetos de la habitación para investigar.",
+        startLi2: "Recoge objetos y úsalos en los lugares correctos.",
+        startLi3: "Evita que el Medidor De Caos llegue al máximo.",
+        startButton: "Comenzar aventura",
+        subtitle: "Una aventura retro apta para la escuela sobre atajos, ciencia rara y hacer justo la tarea que intentabas evitar.",
+        help: "Ayuda",
+        reset: "Reiniciar",
+        status: "Estado",
+        chaos: "Medidor De Caos",
+        debt: "Deuda De Tarea",
+        rep: "Reputación",
+        cloneMood: "Ánimo Del Clon",
+        backpack: "Mochila",
+        questNotebook: "Cuaderno De Misiones",
+        peopleNearby: "Personas Cerca",
+        investigate: "Investigar",
+        goTo: "Ir A",
+        emptyBackpack: "La mochila contiene: pelusa, un lápiz doblado y confianza de origen incierto.",
+        artifacts: count => "Artefactos raros encontrados: " + count + "/" + collectibleItems.length,
+        done: "HECHO: ",
+        todo: "PENDIENTE: ",
+        notCreated: "No Creado",
+        tooEfficient: "Demasiado Eficiente",
+        helpful: "Servicial",
+        unstable: "Inestable",
+        startIntro: room => room + " Sabor invisible de esta partida: " + runVibeLabel() + ".",
+        helpText: "Meta: sigue el Cuaderno De Misiones. Haz clic en objetos de la escena o botones de investigación, recoge materiales, crea el clon, entra en la dimensión, negocia límites y estabiliza el portal. Los artefactos raros opcionales pueden desbloquear un mejor final.",
+        alreadyHandled: "Ya te encargaste de eso. Tu clon del futuro admira tus clics eficientes.",
+        needItem: item => "Necesitas " + displayItem(item) + " antes de que ese plan pueda convertirse en un éxito lamentable.",
+        noPortal: "El portal aún no está abierto. Por ahora, la Dimensión De Tareas Sin Terminar sigue siendo solo una sensación en tu mochila.",
+        nothingUseful: "No hay nada útil ahí, lo cual nunca te ha detenido antes.",
+        optimisticSubtitle: "Un subtítulo diminuto y optimista aparece en el aire: "
+      }
+    };
+
+    const actionText = {
+      es: {
+        "Open your buzzing locker": "Abrir tu casillero zumbante",
+        "Check the vending machine": "Revisar la máquina expendedora",
+        "Read the club posters": "Leer los carteles de clubes",
+        "Trade pudding for a favor": "Cambiar pudín por un favor",
+        "Ask about weird science rumors": "Preguntar por rumores de ciencia rara",
+        "Eat mystery lunch": "Comer el almuerzo misterioso",
+        "Search for cloning manuals": "Buscar manuales de clonación",
+        "Print emergency checklist": "Imprimir lista de emergencia",
+        "Practice responsible decision-making": "Practicar decisiones responsables",
+        "Open the battery drawer": "Abrir el cajón de baterías",
+        "Activate clone machine": "Activar la máquina de clones",
+        "Stabilize the portal": "Estabilizar el portal",
+        "Search lost and found": "Buscar en objetos perdidos",
+        "Ask gym teacher for advice": "Pedir consejo al profe de gimnasia",
+        "Attempt dramatic dodgeball roll": "Intentar una rodada dramática",
+        "Ask for a late slip": "Pedir un pase de tardanza",
+        "Tell the truth about the clone": "Decir la verdad sobre el clon",
+        "Pretend everything is normal": "Fingir que todo es normal",
+        "Talk to your clone": "Hablar con tu clon",
+        "Collect extra-credit crystal": "Recoger cristal de crédito extra",
+        "Organize the floating homework": "Organizar la tarea flotante"
+      }
+    };
+
+    const npcText = {
+      es: {
+        "Rumor Expert": "Experta En Rumores",
+        "Hall Monitor": "Monitor Del Pasillo",
+        "Snack Economist": "Economista De Bocadillos",
+        "Optimism Supplier": "Proveedor De Optimismo",
+        "Librarian Of Calm": "Bibliotecaria De La Calma",
+        "Paper Menace": "Amenaza De Papel",
+        "Science Teacher": "Profe De Ciencias",
+        "Tiny Rule Enforcer": "Pequeño Guardián De Reglas",
+        "Advice At Full Volume": "Consejos A Todo Volumen",
+        "Dodgeball Witness": "Testigo Del Balón",
+        "Kind But Tired": "Amable Pero Cansada",
+        "Form Wizard": "Maga De Formularios",
+        "Feedback Cloud": "Nube De Comentarios",
+        "Cosmic Vending Mood": "Ánimo Cósmico De Máquina"
+      }
+    };
+
+    const npcNameText = {
+      es: {
+        "Cafeteria Legend": "Leyenda De La Cafetería",
+        "Mr. Bell": "Sr. Bell",
+        "Ms. Quill": "Sra. Quill",
+        "Printer": "Impresora",
+        "Dr. Circuit": "Dr. Circuito",
+        "Lab Robot B-12": "Robot De Laboratorio B-12",
+        "Coach Whistle": "Coach Whistle",
+        "Principal Fern": "Directora Fern",
+        "Office Assistant": "Asistente De Oficina",
+        "Rubric Wisp": "Rúbrica Espectral",
+        "Snack Nebula": "Nebulosa De Bocadillos"
+      },
+      zh: {
+        "Cafeteria Legend": "食堂传奇",
+        "Mr. Bell": "Bell 先生",
+        "Ms. Quill": "Quill 女士",
+        "Printer": "打印机",
+        "Dr. Circuit": "Circuit 博士",
+        "Lab Robot B-12": "实验室机器人 B-12",
+        "Coach Whistle": "Whistle 教练",
+        "Principal Fern": "Fern 校长",
+        "Office Assistant": "办公室助理",
+        "Rubric Wisp": "评分幽灵",
+        "Snack Nebula": "零食星云"
+      },
+      hi: {
+        "Cafeteria Legend": "कैफेटेरिया लीजेंड",
+        "Mr. Bell": "श्री बेल",
+        "Ms. Quill": "सुश्री क्विल",
+        "Printer": "प्रिंटर",
+        "Dr. Circuit": "डॉ. सर्किट",
+        "Lab Robot B-12": "लैब रोबोट B-12",
+        "Coach Whistle": "कोच व्हिसल",
+        "Principal Fern": "प्रधानाचार्य फर्न",
+        "Office Assistant": "ऑफिस सहायक",
+        "Rubric Wisp": "रूब्रिक विस्प",
+        "Snack Nebula": "स्नैक नेबुला"
+      },
+      pt: {
+        "Cafeteria Legend": "Lenda Da Cafeteria",
+        "Mr. Bell": "Sr. Bell",
+        "Ms. Quill": "Sra. Quill",
+        "Printer": "Impressora",
+        "Dr. Circuit": "Dr. Circuito",
+        "Lab Robot B-12": "Robô De Laboratório B-12",
+        "Coach Whistle": "Treinador Whistle",
+        "Principal Fern": "Diretora Fern",
+        "Office Assistant": "Assistente Da Secretaria",
+        "Rubric Wisp": "Espírito Da Rubrica",
+        "Snack Nebula": "Nebulosa De Lanches"
+      },
+      bn: {
+        "Cafeteria Legend": "ক্যাফেটেরিয়া কিংবদন্তি",
+        "Mr. Bell": "মিস্টার বেল",
+        "Ms. Quill": "মিস কুইল",
+        "Printer": "প্রিন্টার",
+        "Dr. Circuit": "ড. সার্কিট",
+        "Lab Robot B-12": "ল্যাব রোবট B-12",
+        "Coach Whistle": "কোচ হুইসেল",
+        "Principal Fern": "প্রধান শিক্ষক ফার্ন",
+        "Office Assistant": "অফিস সহকারী",
+        "Rubric Wisp": "রুব্রিক উইস্প",
+        "Snack Nebula": "স্ন্যাক নীহারিকা"
+      }
+    };
+
+    const npcLooks = {
+      "Maya": { shirt: "#f472b6", pants: "#4338ca", hair: "#111827", skin: "#f6c7a9" },
+      "Mr. Bell": { shirt: "#facc15", pants: "#1f2937", hair: "#64748b", skin: "#f1c6a8" },
+      "Cafeteria Legend": { shirt: "#fb923c", pants: "#0f766e", hair: "#7c2d12", skin: "#d8a17d" },
+      "Nina": { shirt: "#22c55e", pants: "#2563eb", hair: "#581c87", skin: "#f6c7a9" },
+      "Ms. Quill": { shirt: "#a78bfa", pants: "#374151", hair: "#334155", skin: "#f2c6a0" },
+      "Printer": { shirt: "#e2e8f0", pants: "#94a3b8", hair: "#64748b", skin: "#cbd5e1", className: "robot" },
+      "Dr. Circuit": { shirt: "#38bdf8", pants: "#1e293b", hair: "#0f172a", skin: "#f6c7a9" },
+      "Lab Robot B-12": { shirt: "#94a3b8", pants: "#475569", hair: "#facc15", skin: "#cbd5e1", className: "robot" },
+      "Coach Whistle": { shirt: "#ef4444", pants: "#111827", hair: "#0f172a", skin: "#e8b48f" },
+      "Sam": { shirt: "#14b8a6", pants: "#1d4ed8", hair: "#92400e", skin: "#f6c7a9" },
+      "Principal Fern": { shirt: "#0f766e", pants: "#312e81", hair: "#78350f", skin: "#f1c6a8" },
+      "Office Assistant": { shirt: "#fde047", pants: "#334155", hair: "#111827", skin: "#e8b48f" },
+      "Rubric Wisp": { shirt: "#ddd6fe", pants: "#99f6e4", hair: "#fef3c7", skin: "#cffafe", className: "floaty" },
+      "Snack Nebula": { shirt: "#f9a8d4", pants: "#67e8f9", hair: "#a78bfa", skin: "#fef3c7", className: "floaty" }
+    };
+
+    const questText = {
+      es: [
+        "Encontrar los materiales sospechosos de la máquina de clones",
+        "Crear el clon sin entrar en pánico inmediatamente",
+        "Entrar en la Dimensión De Tareas Sin Terminar",
+        "Convencer al clon de ayudar, no reemplazarte",
+        "Estabilizar el portal antes de que la escuela se vuelva sopa de tarea"
+      ]
+    };
+
+    const lineText = {
+      es: {
+        "Inside your locker is a USB labeled 'TOTALLY NORMAL STUDENT BACKUP.' Your homework folder is also in there, judging you.": "Dentro de tu casillero hay una USB etiquetada 'RESPALDO DE ESTUDIANTE TOTALMENTE NORMAL'. Tu carpeta de tareas también está ahí, juzgándote.",
+        "It coughs up a pudding cup from 2019 and displays: THANK YOU FOR YOUR BRAVERY.": "Escupe un vasito de pudín de 2019 y muestra: GRACIAS POR TU VALENTÍA.",
+        "A glittery poster says: 'Be Yourself, Unless A Clone Has Better Time Management.' Behind it is a sticker that says simply: MOOD.": "Un cartel brillante dice: 'Sé tú mismo, a menos que un clon administre mejor su tiempo.' Detrás hay una calcomanía que solo dice: ÁNIMO.",
+        "Respect. This pudding has vintage energy. Take these earbuds. One side works if you believe in it.": "Respeto. Este pudín tiene energía vintage. Toma estos audífonos. Un lado funciona si crees lo suficiente.",
+        "I heard the STEM lab has a machine that can duplicate anything, except cafeteria pizza. The pizza duplicates itself emotionally.": "Escuché que el laboratorio STEM tiene una máquina que puede duplicar cualquier cosa, excepto la pizza de la cafetería. La pizza se duplica emocionalmente.",
+        "You feel powerful, confused, and lightly carbonated. Your Homework Debt goes down because survival is educational. You also earn the Legendary Spork.": "Te sientes poderoso, confundido y ligeramente carbonatado. Tu Deuda De Tarea baja porque sobrevivir es educativo. También ganas el Cuchador Legendario.",
+        "You find 'Clone Machines For People Who Definitely Read Instructions.' The first chapter is just the word DON'T repeated 48 times.": "Encuentras 'Máquinas De Clones Para Personas Que Definitivamente Leen Instrucciones'. El primer capítulo solo repite NO 48 veces.",
+        "After a dramatic jam, the printer gives you a checklist: battery, USB, poster, and something sticky enough to hold reality together. It also prints a page that just says BEEP in twelve fonts.": "Después de un atasco dramático, la impresora te da una lista: batería, USB, cartel y algo lo bastante pegajoso para mantener unida la realidad. También imprime una página que solo dice BIP en doce fuentes.",
+        "You take a deep breath and admit that maybe a clone should not be your entire life plan. Growth! Slightly annoying, but growth.": "Respiras hondo y admites que quizá un clon no debería ser todo tu plan de vida. ¡Crecimiento! Un poco molesto, pero crecimiento.",
+        "You find a battery the size of a sandwich. It says: 'May cause ambition, portals, or extra credit.'": "Encuentras una batería del tamaño de un sándwich. Dice: 'Puede causar ambición, portales o crédito extra.'",
+        "You find glitter glue, three identical hoodies, a recorder flute nobody will claim, and a calculator battery older than the school website.": "Encuentras pegamento con brillantina, tres sudaderas idénticas, una flauta que nadie reclamará y una batería de calculadora más vieja que el sitio web de la escuela.",
+        "When life opens a portal, stretch first. Also, stop letting machines do your responsibilities.": "Cuando la vida abre un portal, estira primero. Además, deja de permitir que las máquinas hagan tus responsabilidades.",
+        "You roll two feet, knock over a cone, and somehow become a rumor by lunch.": "Ruedas medio metro, tiras un cono y de algún modo te conviertes en rumor antes del almuerzo.",
+        "This form is for ordinary lateness, not clone-related lateness. But honestly, I have seen weirder before third period.": "Este formulario es para tardanzas normales, no tardanzas relacionadas con clones. Pero honestamente, he visto cosas más raras antes del tercer período.",
+        "I appreciate the honesty. Please do not outsource your homework to experimental technology. Also, impressive initiative.": "Aprecio la honestidad. Por favor no delegues tu tarea a tecnología experimental. Además, iniciativa impresionante.",
+        "You smile too hard. The office plant wilts from the awkwardness.": "Sonríes demasiado fuerte. La planta de la oficina se marchita por la incomodidad.",
+        "The crystal hums with academic power. You immediately understand fractions, then forget why you came in here.": "El cristal zumba con poder académico. Entiendes las fracciones de inmediato y luego olvidas por qué entraste aquí.",
+        "You sort the floating assignments by due date. The dimension respects a good folder system and rewards you with one impossible cheese puff.": "Ordenas las tareas flotantes por fecha de entrega. La dimensión respeta un buen sistema de carpetas y te recompensa con una bolita de queso imposible."
+      },
+      zh: {
+        "Inside your locker is a USB labeled 'TOTALLY NORMAL STUDENT BACKUP.' Your homework folder is also in there, judging you.": "储物柜里有一个标着“完全正常学生备份”的 USB。你的作业文件夹也在里面，正在无声地审判你。",
+        "It coughs up a pudding cup from 2019 and displays: THANK YOU FOR YOUR BRAVERY.": "它咳出一杯 2019 年的布丁，并显示：感谢你的勇气。",
+        "A glittery poster says: 'Be Yourself, Unless A Clone Has Better Time Management.' Behind it is a sticker that says simply: MOOD.": "一张闪亮海报写着：“做你自己，除非克隆人的时间管理更好。”后面贴着一张只写着“心情”的贴纸。",
+        "Respect. This pudding has vintage energy. Take these earbuds. One side works if you believe in it.": "尊敬。这布丁有复古能量。拿着这副耳机吧，只要你足够相信，其中一边就能工作。",
+        "I heard the STEM lab has a machine that can duplicate anything, except cafeteria pizza. The pizza duplicates itself emotionally.": "我听说 STEM 实验室有台机器能复制任何东西，除了食堂披萨。披萨只会在情绪上复制自己。",
+        "You feel powerful, confused, and lightly carbonated. Your Homework Debt goes down because survival is educational. You also earn the Legendary Spork.": "你感到强大、困惑，而且微微冒泡。你的作业债减少了，因为生存本身也很有教育意义。你还获得了传奇叉勺。",
+        "You find 'Clone Machines For People Who Definitely Read Instructions.' The first chapter is just the word DON'T repeated 48 times.": "你找到了《给一定会读说明书的人使用的克隆机器》。第一章只是把“不要”重复了 48 次。",
+        "After a dramatic jam, the printer gives you a checklist: battery, USB, poster, and something sticky enough to hold reality together. It also prints a page that just says BEEP in twelve fonts.": "经历一次戏剧性的卡纸后，打印机给了你一张清单：电池、USB、海报，以及足够黏、能把现实粘住的东西。它还打印了一页，用十二种字体写着“哔”。",
+        "You take a deep breath and admit that maybe a clone should not be your entire life plan. Growth! Slightly annoying, but growth.": "你深吸一口气，承认克隆人也许不该成为你整个人生计划。成长！有点烦，但确实是成长。",
+        "You find a battery the size of a sandwich. It says: 'May cause ambition, portals, or extra credit.'": "你找到一块三明治大小的电池。上面写着：“可能导致野心、传送门或额外加分。”",
+        "You find glitter glue, three identical hoodies, a recorder flute nobody will claim, and a calculator battery older than the school website.": "你找到了闪粉胶、三件一模一样的卫衣、一支没人愿意认领的竖笛，以及一块比学校网站还古老的计算器电池。",
+        "When life opens a portal, stretch first. Also, stop letting machines do your responsibilities.": "当生活打开传送门时，先拉伸一下。另外，别再让机器替你承担责任了。",
+        "You roll two feet, knock over a cone, and somehow become a rumor by lunch.": "你滚了两英尺，撞倒一个路锥，并神奇地在午饭前变成了校园传闻。",
+        "This form is for ordinary lateness, not clone-related lateness. But honestly, I have seen weirder before third period.": "这张表是给普通迟到用的，不是给克隆相关迟到用的。不过说实话，第三节课前我见过更奇怪的事。",
+        "I appreciate the honesty. Please do not outsource your homework to experimental technology. Also, impressive initiative.": "我欣赏你的诚实。请不要把作业外包给实验性科技。另外，主动性确实很强。",
+        "You smile too hard. The office plant wilts from the awkwardness.": "你笑得太用力了。办公室里的植物被尴尬感熏得枯萎。",
+        "The crystal hums with academic power. You immediately understand fractions, then forget why you came in here.": "水晶发出充满学术力量的嗡鸣。你立刻理解了分数，然后忘了自己为什么来这里。",
+        "You sort the floating assignments by due date. The dimension respects a good folder system and rewards you with one impossible cheese puff.": "你按截止日期整理漂浮的作业。这个维度尊重优秀的文件夹系统，并奖励你一颗不可能存在的芝士球。",
+        "That is surprisingly mature. I will downgrade from 'replace you' to 'study buddy with boundaries.'": "这成熟得出乎意料。我会从“替代你”降级为“有边界的学习伙伴”。",
+        "That is surprisingly mature. I will downgrade from 'replace you' to 'study buddy with boundaries.' Also, I color-coded one assignment because growth deserves stationery.": "这成熟得出乎意料。我会从“替代你”降级为“有边界的学习伙伴”。另外，我给一项作业做了颜色分类，因为成长值得拥有文具。",
+        "Treaty accepted. I get left earbud privileges on odd-numbered days and will stop trying to become you, probably.": "条约接受。奇数日左耳机归我使用，我也会停止试图变成你，大概。",
+        "Treaty accepted. I get left earbud privileges on odd-numbered days and will stop trying to become you, probably. Please keep this receipt for emotional tax purposes.": "条约接受。奇数日左耳机归我使用，我也会停止试图变成你，大概。请保留这张收据，以备情绪报税使用。",
+        "A treaty requires snacks, vibes, and at least one working earbud. You currently have vibes of uncertain quality.": "条约需要零食、气氛，以及至少一个能用的耳机。你目前的气氛质量不太确定。",
+        "Strangely, I respect the honesty of this terrible request. I will do one chore, then we both learn the ancient art of boundaries.": "奇怪的是，我尊重这个糟糕请求里的诚实。我会做一件家务，然后我们一起学习古老的边界艺术。",
+        "New task accepted. I am now running for class president, organizing your sock drawer, and judging your browser tabs.": "新任务已接受。我现在要竞选班长、整理你的袜子抽屉，并评判你的浏览器标签页。",
+        "No portal detected. The sensors are bored, which is honestly best-case scenario.": "未检测到传送门。传感器很无聊，说实话这是最好的情况。",
+        "The portal will not stabilize until you and the clone agree on boundaries. Weird science respects communication.": "在你和克隆人就边界达成一致之前，传送门不会稳定。怪科学尊重沟通。",
+        "There is no clone here yet. Just regular you, which is already plenty complicated.": "这里还没有克隆人。只有普通的你，而这已经够复杂了。",
+        "We already agreed: I help with studying, not replacing your entire personality.": "我们已经说好了：我帮你学习，不替代你的整个人格。",
+        "I calculated your optimal life plan: I attend school, you hide in a beanbag forever. Efficient, but emotionally suspicious.": "我计算出了你的最优人生计划：我去上学，你永远躲在懒人沙发里。高效，但情感上很可疑。",
+        "BZZT. Your clone appears, salutes, opens twelve calendar apps, and immediately creates a portal by trying to finish every assignment ever assigned.": "滋滋。你的克隆人出现、敬礼、打开十二个日历应用，并因为试图完成历史上所有作业而立刻制造出一个传送门。",
+        "I already exist. Please stop pressing the 'make another me' button. The hallway cannot emotionally support that.": "我已经存在了。请不要再按“再造一个我”的按钮。走廊在情感上承受不了。",
+        "Missing: ": "缺少："
+      }
+    };
+
+    const npcMemory = {
+      maya: "Maya now believes your life is either a science fair project or a very complicated group chat.",
+      bell: "Mr. Bell has written 'portal situation?' on a clipboard with admirable handwriting.",
+      legend: "The Cafeteria Legend respects your snack-based diplomacy.",
+      nina: "Nina has silently decided you are doing your best, which is legally powerful.",
+      quill: "Ms. Quill has added 'clone ethics' to a library display nobody asked for.",
+      printer: "The printer remembers you. This is not comforting, but it is useful.",
+      circuit: "Dr. Circuit is pretending not to be fascinated by your terrible experimental design.",
+      robot: "B-12 has logged your weirdness under 'educational anomaly.'",
+      coach: "Coach Whistle thinks your portal stance needs more core strength.",
+      sam: "Sam is prepared to testify that you looked medium heroic.",
+      principal: "Principal Fern is concerned, but not disappointed. This distinction matters.",
+      assistant: "The Office Assistant knows which form covers 'reality incident, minor.'",
+      rubric: "The Rubric Wisp wants stronger evidence and softer self-talk.",
+      nebula: "The Snack Nebula has accepted you as a temporary constellation."
+    };
+
+    const npcMemoryEs = {
+      maya: "Maya ahora cree que tu vida es un proyecto de ciencias o un chat grupal muy complicado.",
+      bell: "El Sr. Bell escribió 'situación de portal?' en una tabla con letra admirable.",
+      legend: "La Leyenda De La Cafetería respeta tu diplomacia basada en bocadillos.",
+      nina: "Nina decidió en silencio que estás haciendo tu mejor esfuerzo, lo cual es legalmente poderoso.",
+      quill: "La Sra. Quill agregó 'ética de clones' a una exhibición de la biblioteca que nadie pidió.",
+      printer: "La impresora te recuerda. No es tranquilizador, pero sí útil.",
+      circuit: "Dr. Circuit finge no estar fascinado por tu terrible diseño experimental.",
+      robot: "B-12 registró tu rareza como 'anomalía educativa'.",
+      coach: "Coach Whistle cree que tu postura ante portales necesita más fuerza central.",
+      sam: "Sam está listo para declarar que te viste medianamente heroico.",
+      principal: "La Directora Fern está preocupada, pero no decepcionada. Esa diferencia importa.",
+      assistant: "La Asistente De Oficina sabe qué formulario cubre 'incidente menor de realidad'.",
+      rubric: "La Rúbrica Espectral quiere mejor evidencia y una voz interior más amable.",
+      nebula: "La Nebulosa De Bocadillos te aceptó como constelación temporal."
+    };
+
+    const npcMemoryZh = {
+      maya: "Maya 现在认为你的人生不是科学展项目，就是一个非常复杂的群聊。",
+      bell: "Bell 先生已经用漂亮的字在夹板上写下了“传送门情况？”。",
+      legend: "食堂传奇尊重你的零食外交。",
+      nina: "Nina 默默决定你正在尽力，这在法律上很有力量。",
+      quill: "Quill 女士把“克隆伦理”加进了图书馆展示，虽然没人要求。",
+      printer: "打印机记住了你。这不太安慰人，但很有用。",
+      circuit: "Circuit 博士假装没有被你糟糕的实验设计迷住。",
+      robot: "B-12 已经把你的奇怪记录为“教育异常”。",
+      coach: "Whistle 教练认为你的传送门姿势需要更多核心力量。",
+      sam: "Sam 准备作证说你看起来中等程度英勇。",
+      principal: "Fern 校长很担心，但并不失望。这个区别很重要。",
+      assistant: "办公室助理知道哪张表格能处理“轻微现实事故”。",
+      rubric: "评分幽灵想要更强的证据，也想要更温柔的自我对话。",
+      nebula: "零食星云已经接受你作为临时星座。"
+    };
+
+    const npcChatsEs = {
+      maya: {
+        first: [
+          "Te apoyo como persona, pero como testigo debo decirlo: tu casillero sonaba como una licuadora llena de abejas.",
+          "Si esto se vuelve leyenda escolar, por favor escribe bien mi nombre en el documental."
+        ],
+        repeat: [
+          "Actualización: ahora la gente llama a esto 'La Situación Del Clon'. Muy oficial. Muy de cartel.",
+          "Chequeo de rumores: sigue raro. Chequeo de ánimo: lo manejas mejor de lo esperado."
+        ]
+      },
+      bell: {
+        first: [
+          "Correr en el pasillo está prohibido. Correr de las consecuencias también se desaconseja, aunque es más difícil de anotar.",
+          "He visto muchas mochilas sospechosas. La tuya está en el top tres."
+        ],
+        repeat: [
+          "Recuerda: pasos lentos, palabras honestas, menos portales.",
+          "Te ves con menos pánico que antes. Eso es progreso, aunque tu cabello no esté de acuerdo."
+        ]
+      },
+      legend: {
+        first: [
+          "Toda crisis necesita bocadillos. No porque los bocadillos lo arreglen todo, sino porque la gente con hambre comete errores más ruidosos.",
+          "Tráeme un objeto raro y te diré si tiene valor cafeteril."
+        ],
+        repeat: [
+          "Tu clon preguntó por gomitas de fruta al mayoreo. Ambicioso. Peligroso.",
+          "Califico tu plan actual con tres galletas de cinco. Comestible, pero inestable."
+        ]
+      },
+      nina: {
+        first: [
+          "Te ves como alguien cuyo plan aprendió a abrir puertas. Respira. Todavía puedes elegir lo siguiente correcto.",
+          "Sentirte abrumado no te hace un desastre. Te hace una persona con una mochila dramática."
+        ],
+        repeat: [
+          "Chequeo de paso pequeño: ¿qué es una cosa que puedes arreglar ahora?",
+          "Creo en ti y también en etiquetar cables antes de tocarlos."
+        ]
+      },
+      quill: {
+        first: [
+          "Los manuales de clonación están en ciencia ficción, ética y, lamentablemente, en la bandeja de la impresora.",
+          "Recordatorio: pedir ayuda está permitido. También devolver libros antes de que desarrollen opiniones."
+        ],
+        repeat: [
+          "Tu clon pidió todos los libros de manejo del tiempo. Le di uno y un separador sobre humildad.",
+          "El valor silencioso sigue siendo valor, incluso cuando la impresora hace ruidos extraños."
+        ]
+      },
+      printer: {
+        first: ["BIP. IMPRIMÍ TU CONFLICTO INTERIOR. ES A DOBLE CARA.", "POCO TÓNER. MUCHO DRAMA."],
+        repeat: ["BIP. CRECIMIENTO PERSONAL DETECTADO. ATASCO DE PAPEL OPCIONAL.", "CREO EN TI. POR FAVOR RETIRA LA BANDEJA DOS."]
+      },
+      circuit: {
+        first: [
+          "La ciencia trata de curiosidad, evidencia y no presionar el botón brillante porque tus quehaceres molestan.",
+          "Aun así, tu hipótesis es clara: los atajos pueden crear caminos más largos. Excelentes datos."
+        ],
+        repeat: [
+          "Ajusta una variable a la vez. Preferiblemente no la tela de la realidad.",
+          "Fallar es información. Las máquinas que gritan también son información, solo más ruidosa."
+        ]
+      },
+      robot: {
+        first: [
+          "REGLA UNO: NO ENTRES EN PÁNICO. REGLA DOS: SI HAY PÁNICO, HAZLO LEJOS DE LOS CABLES.",
+          "TU NIVEL DE ESFUERZO ES ACEPTABLE. TU NIVEL DE PLANIFICACIÓN ESTÁ ECHANDO CHISPAS."
+        ],
+        repeat: [
+          "LÍMITES ACTUALIZADOS. PARCHE DE TRABAJO EN EQUIPO INSTALADO.",
+          "ESTÁS MEJORANDO. ACEPTA ESTA ACTUALIZACIÓN EMOCIONAL."
+        ]
+      },
+      coach: {
+        first: [
+          "Cuando la vida te da un portal, endereza los hombros y comunica. También hidrátate.",
+          "No puedes escapar de la responsabilidad con una rodada dramática. Revisé el reglamento."
+        ],
+        repeat: ["El progreso son repeticiones. Una conversación honesta, luego otra.", "Tu forma mejora. Tu manejo de portales todavía necesita práctica."]
+      },
+      sam: {
+        first: [
+          "Vi tu rodada dramática. No fue elegante, pero tuvo importancia narrativa.",
+          "Si alguien pregunta, diré que te movías con propósito."
+        ],
+        repeat: ["Tu clon me preguntó si quería unirme a tres clubes. Me escondí detrás de una colchoneta.", "De algún modo ahora eres la parte menos rara de esto. ¿Felicidades?"]
+      },
+      principal: {
+        first: [
+          "Aprecio la honestidad, la responsabilidad y estudiantes que no abren portales durante el cambio de clase.",
+          "No estás en problemas por necesitar ayuda. Puede que sí por la máquina, pero esas son carpetas distintas."
+        ],
+        repeat: ["La meta no es perfección. La meta es reparar.", "Di la verdad temprano. Le da a todos más tiempo para ser útiles."]
+      },
+      assistant: {
+        first: [
+          "Tenemos formularios para excursiones, ausencias y uno que dice 'evento brillante misceláneo'. Empieza ahí.",
+          "Toma un bolígrafo. Mejor toma dos. La ciencia rara se come los bolígrafos."
+        ],
+        repeat: ["Lo estás haciendo bien. Además, firma aquí si el clon empieza a recibir correo.", "No hay vergüenza en el papeleo. Solo grapado insuficiente."]
+      },
+      rubric: {
+        first: [
+          "AFIRMACIÓN: Lo estás intentando. EVIDENCIA: Volviste. COMENTARIO: Cumple expectativas con espacio para brillar.",
+          "Tu autocrítica necesita más equilibrio y menos márgenes espeluznantes."
+        ],
+        repeat: [
+          "Sugerencia de revisión: cambia 'arruiné todo' por 'estoy aprendiendo en condiciones inusuales'.",
+          "Gran mejora en el tema. El simbolismo del portal sigue siendo excesivo."
+        ]
+      },
+      nebula: {
+        first: [
+          "El cosmos te ofrece una barra de granola emocional. Sabe a perseverancia y pasas.",
+          "Eres una constelación temporal de decisiones. Brilla responsablemente."
+        ],
+        repeat: ["Sabiduría de bocadillo: descansar no es rendirse. Es mantenimiento de batería.", "El universo te apoya en bocados pequeños y crujientes."]
+      }
+    };
+
+    const npcChatsZh = {
+      maya: { first: ["我支持你这个人，但作为目击者必须说：你的储物柜听起来像一台装满蜜蜂的搅拌机。"], repeat: ["更新：大家现在把这叫作“克隆情况”。非常正式，非常适合做标题。"] },
+      bell: { first: ["走廊里不许奔跑。逃避后果也不推荐，虽然比较难写进记录。"], repeat: ["记住：脚步慢一点，话语诚实一点，传送门少一点。"] },
+      legend: { first: ["每场危机都需要零食。不是因为零食能解决问题，而是饿着的人会犯更响亮的错误。"], repeat: ["你的克隆人一直在问水果软糖批发。雄心勃勃，也很危险。"] },
+      nina: { first: ["你看起来像一个计划学会开门的人。呼吸一下。你仍然可以选择下一个正确的小步骤。"], repeat: ["小步骤检查：现在有哪一件事是你能修好的？"] },
+      quill: { first: ["克隆手册在科幻、伦理学，以及很遗憾，打印机托盘里。"], repeat: ["你的克隆人借走了所有时间管理书。我给了它一本，还有一张关于谦逊的书签。"] },
+      printer: { first: ["哔。我打印了你的内心冲突。双面打印。"], repeat: ["哔。检测到个人成长。卡纸可选。"] },
+      circuit: { first: ["科学关乎好奇心、证据，以及不要因为讨厌家务就按发光按钮。"], repeat: ["一次只调整一个变量。最好不要调整现实的结构。"] },
+      robot: { first: ["规则一：不要惊慌。规则二：如果正在惊慌，请远离电缆。"], repeat: ["边界已更新。团队合作补丁已安装。"] },
+      coach: { first: ["当生活给你一个传送门，先站稳、沟通，然后补水。"], repeat: ["进步就是重复训练。一次诚实谈话，然后再来一次。"] },
+      sam: { first: ["我看见你的戏剧性翻滚了。不优雅，但有叙事意义。"], repeat: ["你的克隆人问我要不要加入三个社团。我躲到了垫子后面。"] },
+      principal: { first: ["我欣赏诚实、责任感，以及不在课间打开传送门的学生。"], repeat: ["目标不是完美。目标是修复。"] },
+      assistant: { first: ["我们有郊游、缺勤，以及一张写着“杂项闪光事件”的表格。先从那张开始。"], repeat: ["你做得不错。另外，如果克隆人开始收邮件，请在这里签名。"] },
+      rubric: { first: ["主张：你在努力。证据：你回来了。评语：达到预期，并有发光空间。"], repeat: ["修改建议：把“我毁了一切”改成“我正在不寻常条件下学习”。"] },
+      nebula: { first: ["宇宙给你一根情绪燕麦棒。味道像坚持和葡萄干。"], repeat: ["零食智慧：休息不是放弃，是电池维护。"] }
+    };
+
+    const cloneChoiceText = {
+      zh: {
+        admit: "承认捷径失控了",
+        treaty: "提供一个能用的耳机和零食条约",
+        chores: "让克隆人做更多家务"
+      },
+      hi: {
+        admit: "मानो कि शॉर्टकट हाथ से निकल गए",
+        treaty: "एक काम करता ईयरबड और स्नैक संधि दो",
+        chores: "क्लोन से और काम करने को कहो"
+      },
+      pt: {
+        admit: "Admitir que os atalhos saíram do controle",
+        treaty: "Oferecer um fone funcionando e um tratado de lanches",
+        chores: "Pedir ainda mais tarefas ao clone"
+      },
+      bn: {
+        admit: "স্বীকার করো শর্টকাট নিয়ন্ত্রণের বাইরে গেছে",
+        treaty: "একটি কাজ করা ইয়ারবাড আর স্ন্যাক চুক্তি দাও",
+        chores: "ক্লোনকে আরও কাজ করতে বলো"
+      }
+    };
+
+    const speakerText = {
+      zh: { "Narrator": "旁白", "You": "你", "Help Desk": "帮助台", "Clone": "克隆人", "Clone Machine": "克隆机器", "Portal Sensors": "传送门传感器", "Vending Machine": "自动售货机", "Cafeteria Legend": "食堂传奇", "Search Results": "搜索结果", "Printer": "打印机", "Poster": "海报", "Lost And Found": "失物招领", "Coach": "教练", "Office Assistant": "办公室助理", "Principal": "校长" },
+      hi: { "Narrator": "कथावाचक", "You": "तुम", "Help Desk": "सहायता डेस्क", "Clone": "क्लोन", "Clone Machine": "क्लोन मशीन", "Portal Sensors": "पोर्टल सेंसर", "Vending Machine": "वेंडिंग मशीन", "Cafeteria Legend": "कैफेटेरिया लीजेंड", "Search Results": "खोज परिणाम", "Printer": "प्रिंटर", "Poster": "पोस्टर", "Lost And Found": "लॉस्ट एंड फाउंड", "Coach": "कोच", "Office Assistant": "ऑफिस सहायक", "Principal": "प्रधानाचार्य" },
+      pt: { "Narrator": "Narrador", "You": "Você", "Help Desk": "Central De Ajuda", "Clone": "Clone", "Clone Machine": "Máquina De Clones", "Portal Sensors": "Sensores Do Portal", "Vending Machine": "Máquina De Lanches", "Cafeteria Legend": "Lenda Da Cafeteria", "Search Results": "Resultados Da Busca", "Printer": "Impressora", "Poster": "Cartaz", "Lost And Found": "Achados E Perdidos", "Coach": "Treinador", "Office Assistant": "Assistente Da Secretaria", "Principal": "Diretora" },
+      bn: { "Narrator": "বর্ণনাকারী", "You": "তুমি", "Help Desk": "সহায়তা ডেস্ক", "Clone": "ক্লোন", "Clone Machine": "ক্লোন মেশিন", "Portal Sensors": "পোর্টাল সেন্সর", "Vending Machine": "ভেন্ডিং মেশিন", "Cafeteria Legend": "ক্যাফেটেরিয়া কিংবদন্তি", "Search Results": "অনুসন্ধান ফলাফল", "Printer": "প্রিন্টার", "Poster": "পোস্টার", "Lost And Found": "হারানো-প্রাপ্তি", "Coach": "কোচ", "Office Assistant": "অফিস সহকারী", "Principal": "প্রধান শিক্ষক" }
+    };
+
+    const extraLanguagePacks = {
+      zh: {
+        ui: {
+          startTitle: "Clone Club", gameTitle: "Clone Club：绝对不是我的作业", startSubtitle: "绝对不是我的作业", startP1: "你在食堂自动售货机后面发现了一台可疑的学生克隆装置。你的计划：创造一个克隆人来处理学校、作业、家务，以及那些说“我来做幻灯片”然后消失的小组项目。", startP2: "问题是：克隆人太擅长当你了。它加入所有社团，开始优化你的人生，还意外打开了通往未完成作业维度的传送门。", startLi1: "点击房间物品进行调查。", startLi2: "收集物品，并在正确的地方使用它们。", startLi3: "别让混乱值爆表。", startButton: "开始冒险",
+          subtitle: "一场适合校园的复古冒险，关于捷径、怪科学，以及你本想逃掉的那件家务。", help: "帮助", reset: "重置", status: "状态", chaos: "混乱值", debt: "作业债", rep: "声望", cloneMood: "克隆心情", backpack: "背包", questNotebook: "任务笔记", peopleNearby: "附近的人", investigate: "调查", goTo: "前往", emptyBackpack: "背包里有：绒毛、一支弯铅笔，以及来历不明的自信。", artifacts: count => "找到的奇怪物品：" + count + "/" + collectibleItems.length, done: "完成：", todo: "待办：", notCreated: "未创建", tooEfficient: "过于高效", helpful: "乐于帮忙", unstable: "不稳定", startIntro: room => room + " 本局隐藏风味：" + runVibeLabel() + "。", helpText: "目标：跟随任务笔记。点击场景物品或调查按钮，收集材料，创建克隆人，进入维度，协商边界，并稳定传送门。可选的奇怪物品能解锁更好的结局。", alreadyHandled: "你已经处理过了。未来的克隆人为你的高效点击感到骄傲。", needItem: item => "你需要先拿到" + displayItem(item) + "，这个计划才可能变成令人后悔的成功。", noPortal: "传送门还没打开。目前，未完成作业维度只是一种背包里的感觉。", nothingUseful: "那里没什么有用的，但这从来没阻止过你。", optimisticSubtitle: "空气中出现了一行小小的乐观字幕："
+        },
+        rooms: {
+          hallway: ["主走廊", ["储物柜墙", "自动售货机", "社团海报"], "走廊闻起来像地板蜡、铅笔屑和一点点恐慌。你的储物柜嗡嗡作响，好像很有意见。"],
+          cafeteria: ["食堂", ["神秘午餐", "传奇餐桌", "零食车"], "食堂吵得能让勺子震动。有人像交易稀有宝石一样交易水果软糖。"],
+          library: ["图书馆媒体中心", ["古老打印机", "研究桌", "安静区"], "图书馆很平静，除了那台听起来像要逃出闹鬼抽屉的打印机。"],
+          stemLab: ["STEM 实验室", ["克隆机器", "电池抽屉", "传送门传感器"], "STEM 实验室里有电线、护目镜、机器人，以及一台写着“不要用于逃避作业”的机器。"],
+          gym: ["体育馆", ["看台", "失物招领", "躲避球筐"], "体育馆闻起来像运动鞋和英雄式过度自信。失物招领已经产生了自我意识。"],
+          office: ["前台办公室", ["考勤桌", "校长室门", "表格架"], "前台办公室安静得让你想承认一些你还没做过的事。"],
+          dimension: ["未完成作业维度", ["漂浮评分表", "作文迷雾", "零食星云"], "松散的作业纸在空中漂浮。巨大的评分表低语：需要更多证据。你的克隆人在附近，优化得太努力了。"]
+        },
+        encouragements: ["小小的进步也算数。", "你可以一边即兴发挥一边学习。", "负责任的选择会让现实少一点嘎吱声。", "求助不是捷径，是超能力。", "弄乱了也可以成为收拾残局的人。"]
+      },
+      hi: {
+        ui: {
+          startTitle: "Clone Club", gameTitle: "Clone Club: यह मेरी होमवर्क नहीं है", startSubtitle: "यह मेरी होमवर्क नहीं है", startP1: "कैफेटेरिया की वेंडिंग मशीन के पीछे तुम्हें एक संदिग्ध छात्र-क्लोनिंग मशीन मिली। योजना: एक क्लोन बनाना जो स्कूल, होमवर्क, काम और हर उस ग्रुप प्रोजेक्ट को संभाले जिसमें कोई कहता है “मैं स्लाइड बनाऊंगा” और फिर गायब हो जाता है।", startP2: "समस्या: क्लोन तुम बनने में बहुत अच्छा है। वह हर क्लब में शामिल होता है, तुम्हारी जिंदगी सुधारने लगता है, और गलती से अधूरे असाइनमेंट की दुनिया का पोर्टल खोल देता है।", startLi1: "जांच के लिए कमरे की चीजों पर क्लिक करो।", startLi2: "चीजें इकट्ठा करो और सही जगह इस्तेमाल करो।", startLi3: "कैओस मीटर को पूरा भरने मत दो।", startButton: "साहसिक खेल शुरू करें",
+          subtitle: "शॉर्टकट, अजीब विज्ञान, और उस काम के बारे में स्कूल-सेफ रेट्रो रोमांच जिससे तुम बचना चाहते थे।", help: "मदद", reset: "रीसेट", status: "स्थिति", chaos: "कैओस मीटर", debt: "होमवर्क कर्ज", rep: "प्रतिष्ठा", cloneMood: "क्लोन मूड", backpack: "बैग", questNotebook: "क्वेस्ट नोटबुक", peopleNearby: "आसपास के लोग", investigate: "जांच करें", goTo: "जाएँ", emptyBackpack: "बैग में है: रेशा, एक मुड़ी हुई पेंसिल, और अनिश्चित स्रोत का आत्मविश्वास।", artifacts: count => "अजीब वस्तुएँ मिलीं: " + count + "/" + collectibleItems.length, done: "पूरा: ", todo: "बाकी: ", notCreated: "नहीं बनाया", tooEfficient: "बहुत कुशल", helpful: "मददगार", unstable: "अस्थिर", startIntro: room => room + " आज की छुपी खेल-फ्लेवर: " + runVibeLabel() + "।", helpText: "लक्ष्य: क्वेस्ट नोटबुक का पालन करो। चीजों पर क्लिक करो, सामान जुटाओ, क्लोन बनाओ, डाइमेंशन में जाओ, सीमाएँ तय करो और पोर्टल स्थिर करो। वैकल्पिक अजीब वस्तुएँ बेहतर अंत खोल सकती हैं।", alreadyHandled: "तुम यह पहले ही कर चुके हो। तुम्हारा भविष्य वाला क्लोन तुम्हारी कुशल क्लिकिंग पर गर्व करता है।", needItem: item => "इस योजना को सफल बनाने से पहले तुम्हें " + displayItem(item) + " चाहिए।", noPortal: "पोर्टल अभी खुला नहीं है। अभी अधूरे असाइनमेंट की दुनिया बस तुम्हारे बैग की एक भावना है।", nothingUseful: "वहाँ कुछ उपयोगी नहीं है, पर इससे तुम कब रुके हो।", optimisticSubtitle: "हवा में एक छोटा आशावादी सबटाइटल आता है: "
+        },
+        rooms: {
+          hallway: ["मुख्य गलियारा", ["लॉकर दीवार", "वेंडिंग मशीन", "क्लब पोस्टर"], "गलियारे में फर्श पॉलिश, पेंसिल छीलन और थोड़े डर की गंध है। तुम्हारा लॉकर राय रखने जैसा बज रहा है।"],
+          cafeteria: ["कैफेटेरिया", ["रहस्यमय लंच", "किंवदंती वाली मेज", "स्नैक कार्ट"], "कैफेटेरिया इतना शोर करता है कि चम्मच भी कांप जाए। कोई फ्रूट स्नैक्स को दुर्लभ रत्नों की तरह बदल रहा है।"],
+          library: ["लाइब्रेरी मीडिया सेंटर", ["पुराना प्रिंटर", "रिसर्च डेस्क", "शांत क्षेत्र"], "लाइब्रेरी शांत है, प्रिंटर को छोड़कर, जो किसी डरावने दराज से भागने जैसा आवाज करता है।"],
+          stemLab: ["STEM लैब", ["क्लोन मशीन", "बैटरी दराज", "पोर्टल सेंसर"], "STEM लैब में तार, गॉगल्स, रोबोट और एक मशीन है जिस पर लिखा है: होमवर्क से बचने के लिए उपयोग न करें।"],
+          gym: ["जिम", ["ब्लीचर्स", "लॉस्ट एंड फाउंड", "डॉजबॉल बिन"], "जिम में जूतों और हीरो जैसी अति-आत्मविश्वास की गंध है। लॉस्ट एंड फाउंड ने चेतना पा ली है।"],
+          office: ["फ्रंट ऑफिस", ["अटेंडेंस डेस्क", "प्रधानाचार्य का दरवाज़ा", "फॉर्म रैक"], "फ्रंट ऑफिस इतना शांत है कि तुम्हें वे बातें भी कबूल करने का मन हो जिन्हें तुमने अभी किया नहीं।"],
+          dimension: ["अधूरे असाइनमेंट की दुनिया", ["तैरती रूब्रिक", "निबंध धुंध", "स्नैक नेबुला"], "ढीले वर्कशीट हवा में तैरते हैं। एक विशाल रूब्रिक फुसफुसाता है: और प्रमाण चाहिए। तुम्हारा क्लोन पास में है, बहुत ज्यादा अनुकूलन कर रहा है।"]
+        },
+        encouragements: ["छोटी प्रगति भी मायने रखती है।", "तुम सीखते हुए भी मुख्य किरदार हो।", "जिम्मेदार फैसले वास्तविकता को कम कुरकुरा बनाते हैं।", "मदद मांगना ताकत है।", "गलती करके भी तुम उसे सुधारने वाले बन सकते हो।"]
+      },
+      pt: {
+        ui: {
+          startTitle: "Clone Club", gameTitle: "Clone Club: Definitivamente Não É Meu Dever", startSubtitle: "Definitivamente Não É Meu Dever", startP1: "Você encontrou uma máquina suspeita de clonar estudantes atrás da máquina de lanches da cafeteria. Seu plano: criar um clone para cuidar da escola, do dever, das tarefas e de todo projeto em grupo em que alguém diz “eu faço os slides” e desaparece.", startP2: "O problema: o clone é bom demais em ser você. Ele entra em todos os clubes, começa a otimizar sua vida e abre sem querer um portal para a Dimensão Das Tarefas Inacabadas.", startLi1: "Clique nos objetos da sala para investigar.", startLi2: "Colete itens e use-os nos lugares certos.", startLi3: "Não deixe o Medidor De Caos chegar ao máximo.", startButton: "Começar aventura",
+          subtitle: "Uma aventura retrô segura para a escola sobre atalhos, ciência esquisita e fazer a tarefa que você tentava evitar.", help: "Ajuda", reset: "Reiniciar", status: "Status", chaos: "Medidor De Caos", debt: "Dívida De Dever", rep: "Reputação", cloneMood: "Humor Do Clone", backpack: "Mochila", questNotebook: "Caderno De Missões", peopleNearby: "Pessoas Por Perto", investigate: "Investigar", goTo: "Ir Para", emptyBackpack: "A mochila contém: fiapo, um lápis torto e confiança de origem incerta.", artifacts: count => "Artefatos estranhos encontrados: " + count + "/" + collectibleItems.length, done: "FEITO: ", todo: "A FAZER: ", notCreated: "Não Criado", tooEfficient: "Eficiente Demais", helpful: "Prestativo", unstable: "Instável", startIntro: room => room + " Sabor invisível desta partida: " + runVibeLabel() + ".", helpText: "Objetivo: siga o Caderno De Missões. Clique em objetos ou botões de investigação, colete suprimentos, crie o clone, entre na dimensão, negocie limites e estabilize o portal. Artefatos opcionais podem liberar um final melhor.", alreadyHandled: "Você já cuidou disso. Seu clone do futuro tem orgulho dos seus cliques eficientes.", needItem: item => "Você precisa de " + displayItem(item) + " antes desse plano virar um sucesso lamentável.", noPortal: "O portal ainda não está aberto. Por enquanto, a Dimensão Das Tarefas Inacabadas é só uma sensação na mochila.", nothingUseful: "Não há nada útil ali, o que nunca impediu você antes.", optimisticSubtitle: "Uma legenda otimista aparece no ar: "
+        },
+        rooms: {
+          hallway: ["Corredor Principal", ["Parede De Armários", "Máquina De Lanches", "Cartazes De Clubes"], "O corredor cheira a cera de piso, aparas de lápis e um pouquinho de pânico. Seu armário vibra como se tivesse opiniões."],
+          cafeteria: ["Cafeteria", ["Almoço Misterioso", "Mesa Das Lendas", "Carrinho De Lanches"], "A cafeteria é barulhenta o suficiente para fazer uma colher vibrar. Alguém troca salgadinhos como pedras preciosas."],
+          library: ["Biblioteca", ["Impressora Antiga", "Mesa De Pesquisa", "Zona Silenciosa"], "A biblioteca está tranquila, exceto pela impressora, que parece tentar fugir de uma gaveta assombrada."],
+          stemLab: ["Laboratório STEM", ["Máquina De Clones", "Gaveta De Baterias", "Sensores Do Portal"], "O laboratório STEM tem fios, óculos, robôs e uma máquina com a etiqueta: NÃO USAR PARA EVITAR DEVER."],
+          gym: ["Ginásio", ["Arquibancadas", "Achados E Perdidos", "Cesto De Dodgeball"], "O ginásio cheira a tênis e excesso heroico de confiança. Os achados e perdidos ganharam consciência."],
+          office: ["Secretaria", ["Balcão De Presença", "Porta Da Diretora", "Estante De Formulários"], "A secretaria é calma de um jeito que dá vontade de confessar coisas que você ainda nem fez."],
+          dimension: ["Dimensão Das Tarefas Inacabadas", ["Rubricas Flutuantes", "Névoa De Redações", "Nebulosa De Lanches"], "Folhas soltas flutuam no ar. Uma rubrica gigante sussurra: precisa de mais evidências. Seu clone está por perto, otimizando demais."]
+        },
+        encouragements: ["Pequeno progresso ainda conta.", "Você pode improvisar, aprender e continuar sendo protagonista.", "Escolhas responsáveis deixam a realidade menos crocante.", "Pedir ajuda é uma superpotência subestimada.", "Você pode fazer bagunça e ainda virar quem arruma."]
+      },
+      bn: {
+        ui: {
+          startTitle: "Clone Club", gameTitle: "Clone Club: নিশ্চয়ই আমার হোমওয়ার্ক নয়", startSubtitle: "নিশ্চয়ই আমার হোমওয়ার্ক নয়", startP1: "ক্যাফেটেরিয়ার ভেন্ডিং মেশিনের পিছনে তুমি একটি সন্দেহজনক ছাত্র-ক্লোনিং যন্ত্র পেয়েছ। পরিকল্পনা: এমন এক ক্লোন বানানো যে স্কুল, হোমওয়ার্ক, কাজকর্ম আর সেই সব গ্রুপ প্রজেক্ট সামলাবে যেখানে কেউ বলে “আমি স্লাইড বানাব” তারপর উধাও।", startP2: "সমস্যা: ক্লোনটি তোমার মতো হতে খুবই ভালো। সে সব ক্লাবে যোগ দেয়, তোমার জীবন অপটিমাইজ করতে শুরু করে, আর ভুল করে অসমাপ্ত অ্যাসাইনমেন্টের মাত্রায় একটি পোর্টাল খুলে ফেলে।", startLi1: "তদন্ত করতে ঘরের জিনিসে ক্লিক করো।", startLi2: "জিনিস সংগ্রহ করো এবং সঠিক জায়গায় ব্যবহার করো।", startLi3: "কেওস মিটার পূর্ণ হতে দিও না।", startButton: "অ্যাডভেঞ্চার শুরু করো",
+          subtitle: "শর্টকাট, অদ্ভুত বিজ্ঞান, আর যে কাজটি তুমি এড়াতে চাইছিলে তা নিয়ে স্কুল-নিরাপদ রেট্রো অ্যাডভেঞ্চার।", help: "সাহায্য", reset: "রিসেট", status: "অবস্থা", chaos: "কেওস মিটার", debt: "হোমওয়ার্ক ঋণ", rep: "সুনাম", cloneMood: "ক্লোনের মেজাজ", backpack: "ব্যাকপ্যাক", questNotebook: "কোয়েস্ট নোটবুক", peopleNearby: "আশেপাশের মানুষ", investigate: "তদন্ত", goTo: "যাও", emptyBackpack: "ব্যাকপ্যাকে আছে: তুলা, একটি বাঁকা পেন্সিল, আর অজানা উৎসের আত্মবিশ্বাস।", artifacts: count => "অদ্ভুত বস্তু পাওয়া গেছে: " + count + "/" + collectibleItems.length, done: "শেষ: ", todo: "বাকি: ", notCreated: "তৈরি হয়নি", tooEfficient: "অতিরিক্ত দক্ষ", helpful: "সহায়ক", unstable: "অস্থির", startIntro: room => room + " আজকের অদৃশ্য গেম স্বাদ: " + runVibeLabel() + "।", helpText: "লক্ষ্য: কোয়েস্ট নোটবুক অনুসরণ করো। দৃশ্যের জিনিস বা তদন্ত বোতামে ক্লিক করো, সরঞ্জাম সংগ্রহ করো, ক্লোন তৈরি করো, মাত্রায় প্রবেশ করো, সীমা নিয়ে কথা বলো এবং পোর্টাল স্থিতিশীল করো। ঐচ্ছিক অদ্ভুত বস্তু ভালো সমাপ্তি খুলতে পারে।", alreadyHandled: "এটা তুমি আগেই সামলেছ। ভবিষ্যতের ক্লোন তোমার দক্ষ ক্লিকিং নিয়ে গর্বিত।", needItem: item => "এই পরিকল্পনা সফল হওয়ার আগে তোমার " + displayItem(item) + " দরকার।", noPortal: "পোর্টাল এখনও খোলা নয়। আপাতত অসমাপ্ত অ্যাসাইনমেন্টের মাত্রা তোমার ব্যাকপ্যাকের এক অনুভূতি মাত্র।", nothingUseful: "ওখানে কিছু দরকারি নেই, কিন্তু এতে তুমি আগে কখনও থামোনি।", optimisticSubtitle: "হাওয়ায় ছোট্ট আশাবাদী সাবটাইটেল ভেসে ওঠে: "
+        },
+        rooms: {
+          hallway: ["প্রধান করিডর", ["লকার দেয়াল", "ভেন্ডিং মেশিন", "ক্লাব পোস্টার"], "করিডরে মেঝের মোম, পেন্সিলের কুচি আর সামান্য আতঙ্কের গন্ধ। তোমার লকার এমনভাবে গুনগুন করছে যেন তার মতামত আছে।"],
+          cafeteria: ["ক্যাফেটেরিয়া", ["রহস্যময় লাঞ্চ", "কিংবদন্তির টেবিল", "স্ন্যাক কার্ট"], "ক্যাফেটেরিয়া এত জোরে যে চামচ কেঁপে উঠতে পারে। কেউ ফলের স্ন্যাকস দুর্লভ রত্নের মতো বিনিময় করছে।"],
+          library: ["লাইব্রেরি মিডিয়া সেন্টার", ["প্রাচীন প্রিন্টার", "গবেষণা ডেস্ক", "নীরব এলাকা"], "লাইব্রেরি শান্ত, প্রিন্টার বাদে, যা ভুতুড়ে ড্রয়ার থেকে পালানোর মতো শব্দ করছে।"],
+          stemLab: ["STEM ল্যাব", ["ক্লোন মেশিন", "ব্যাটারি ড্রয়ার", "পোর্টাল সেন্সর"], "STEM ল্যাবে তার, গগলস, রোবট এবং একটি মেশিন আছে যার লেবেল: হোমওয়ার্ক এড়াতে ব্যবহার নয়।"],
+          gym: ["জিম", ["ব্লিচার", "হারানো-প্রাপ্তি", "ডজবল বিন"], "জিমে স্নিকার্স আর বীরত্বপূর্ণ অতিরিক্ত আত্মবিশ্বাসের গন্ধ। হারানো-প্রাপ্তি সচেতন হয়ে উঠেছে।"],
+          office: ["ফ্রন্ট অফিস", ["উপস্থিতি ডেস্ক", "প্রধান শিক্ষকের দরজা", "ফর্ম র্যাক"], "ফ্রন্ট অফিস এত শান্ত যে তুমি এখনও না-করা কাজও স্বীকার করতে চাইবে।"],
+          dimension: ["অসমাপ্ত অ্যাসাইনমেন্টের মাত্রা", ["ভাসমান রুব্রিক", "রচনা কুয়াশা", "স্ন্যাক নীহারিকা"], "ঢিলা ওয়ার্কশিট বাতাসে ভাসছে। বিশাল রুব্রিক ফিসফিস করে: আরও প্রমাণ দরকার। তোমার ক্লোন কাছেই আছে, অতিরিক্ত অপটিমাইজ করছে।"]
+        },
+        encouragements: ["ছোট অগ্রগতিও অগ্রগতি।", "তুমি শিখতে শিখতেও প্রধান চরিত্র।", "দায়িত্বশীল সিদ্ধান্ত বাস্তবতাকে কম কচকচে করে।", "সাহায্য চাওয়া শক্তি।", "ভুল করেও তুমি ঠিক করার মানুষ হতে পারো।"]
+      }
+    };
+
+    function installExtraLanguagePacks() {
+      Object.entries(extraLanguagePacks).forEach(([lang, pack]) => {
+        uiText[lang] = pack.ui;
+        encouragementText[lang] = pack.encouragements;
+        roomText[lang] = {};
+        Object.entries(pack.rooms).forEach(([key, value]) => {
+          roomText[lang][key] = { title: value[0], props: value[1], intro: value[2] };
+        });
+      });
+
+      const translatedItems = {
+        zh: ["神秘 USB", "过期布丁", "励志海报", "半充电耳机", "克隆手册", "传送门清单", "巨型电池", "闪粉胶", "看似官方的表格", "加分水晶", "来历不明的贴纸", "传奇叉勺", "打印机乱码", "古老计算器电池", "走廊芝士球", "零食条约收据", "应急饼干", "打印机鼓励纸条", "借来的办公室笔", "宇宙葡萄干"],
+        hi: ["रहस्यमय USB", "एक्सपायर्ड पुडिंग", "प्रेरक पोस्टर", "आधे चार्ज ईयरबड्स", "क्लोनिंग मैनुअल", "पोर्टल चेकलिस्ट", "मेगा बैटरी", "ग्लिटर ग्लू", "आधिकारिक दिखने वाला फॉर्म", "एक्स्ट्रा-क्रेडिट क्रिस्टल", "अस्पष्ट स्रोत का स्टिकर", "लेजेंडरी स्पॉर्क", "प्रिंटर बकवास", "पुरानी कैलकुलेटर बैटरी", "गलियारे का चीज पफ", "स्नैक संधि रसीद", "आपातकालीन क्रैकर", "प्रिंटर प्रोत्साहन पर्ची", "उधार ली ऑफिस पेन", "कॉस्मिक किशमिश"],
+        pt: ["USB Misterioso", "Pudim Vencido", "Cartaz Motivacional", "Fones Meio Carregados", "Manual De Clonagem", "Checklist Do Portal", "Mega Bateria", "Cola Com Glitter", "Formulário Com Cara Oficial", "Cristal De Crédito Extra", "Adesivo De Origem Duvidosa", "Spork Lendário", "Bobagem Da Impressora", "Bateria Antiga De Calculadora", "Salgadinho Do Corredor", "Recibo Do Tratado De Lanches", "Bolacha De Emergência", "Bilhete De Incentivo Da Impressora", "Caneta Emprestada Da Secretaria", "Uva-Passa Cósmica"],
+        bn: ["রহস্যময় USB", "মেয়াদোত্তীর্ণ পুডিং", "অনুপ্রেরণামূলক পোস্টার", "আধা-চার্জড ইয়ারবাড", "ক্লোনিং ম্যানুয়াল", "পোর্টাল চেকলিস্ট", "মেগা ব্যাটারি", "গ্লিটার গ্লু", "সরকারি-দেখা ফর্ম", "এক্সট্রা-ক্রেডিট ক্রিস্টাল", "অস্পষ্ট উৎসের স্টিকার", "কিংবদন্তি স্পর্ক", "প্রিন্টার গোলমাল", "প্রাচীন ক্যালকুলেটর ব্যাটারি", "করিডরের চিজ পাফ", "স্ন্যাক চুক্তির রসিদ", "জরুরি ক্র্যাকার", "প্রিন্টারের উৎসাহ নোট", "ধার করা অফিস কলম", "মহাজাগতিক কিশমিশ"]
+      };
+      const itemKeys = ["Mystery USB", "Expired Pudding", "Motivational Poster", "Half-Charged Earbuds", "Cloning Manual", "Portal Checklist", "Mega Battery", "Glitter Glue", "Official-Looking Form", "Extra-Credit Crystal", "Sticker Of Unclear Origin", "Legendary Spork", "Printer Gobbledygook", "Ancient Calculator Battery", "Hallway Cheese Puff", "Snack Treaty Receipt", "Emergency Cracker", "Printer Encouragement Slip", "Borrowed Office Pen", "Cosmic Raisin"];
+      Object.entries(translatedItems).forEach(([lang, values]) => {
+        itemText[lang] = {};
+        itemKeys.forEach((key, index) => itemText[lang][key] = values[index]);
+      });
+
+      const translatedActions = {
+        zh: ["打开嗡嗡作响的储物柜", "检查自动售货机", "阅读社团海报", "用布丁换一个人情", "询问怪科学传闻", "吃神秘午餐", "寻找克隆手册", "打印紧急清单", "练习负责任的决定", "打开电池抽屉", "启动克隆机器", "稳定传送门", "搜索失物招领", "向体育老师请教", "尝试戏剧性的躲避球翻滚", "索要迟到单", "说出克隆人的真相", "假装一切正常", "和你的克隆人谈话", "收集加分水晶", "整理漂浮作业"],
+        hi: ["बजता लॉकर खोलो", "वेंडिंग मशीन जांचो", "क्लब पोस्टर पढ़ो", "पुडिंग के बदले एहसान लो", "अजीब विज्ञान की अफवाह पूछो", "रहस्यमय लंच खाओ", "क्लोनिंग मैनुअल खोजो", "आपातकालीन चेकलिस्ट प्रिंट करो", "जिम्मेदार निर्णय का अभ्यास करो", "बैटरी दराज खोलो", "क्लोन मशीन चालू करो", "पोर्टल स्थिर करो", "लॉस्ट एंड फाउंड खोजो", "जिम शिक्षक से सलाह लो", "नाटकीय डॉजबॉल रोल करो", "लेट स्लिप मांगो", "क्लोन की सच्चाई बताओ", "सब सामान्य होने का नाटक करो", "अपने क्लोन से बात करो", "एक्स्ट्रा-क्रेडिट क्रिस्टल लो", "तैरते होमवर्क व्यवस्थित करो"],
+        pt: ["Abrir seu armário vibrando", "Verificar a máquina de lanches", "Ler os cartazes de clubes", "Trocar pudim por um favor", "Perguntar sobre rumores de ciência esquisita", "Comer o almoço misterioso", "Procurar manuais de clonagem", "Imprimir checklist de emergência", "Praticar decisões responsáveis", "Abrir a gaveta de baterias", "Ativar máquina de clones", "Estabilizar o portal", "Procurar nos achados e perdidos", "Pedir conselho ao professor de educação física", "Tentar rolamento dramático de dodgeball", "Pedir um passe de atraso", "Contar a verdade sobre o clone", "Fingir que tudo está normal", "Falar com seu clone", "Coletar cristal de crédito extra", "Organizar o dever flutuante"],
+        bn: ["গুনগুন করা লকার খোলো", "ভেন্ডিং মেশিন দেখো", "ক্লাব পোস্টার পড়ো", "পুডিং বদলে সাহায্য নাও", "অদ্ভুত বিজ্ঞানের গুজব জিজ্ঞেস করো", "রহস্যময় লাঞ্চ খাও", "ক্লোনিং ম্যানুয়াল খুঁজো", "জরুরি চেকলিস্ট প্রিন্ট করো", "দায়িত্বশীল সিদ্ধান্ত অনুশীলন করো", "ব্যাটারি ড্রয়ার খোলো", "ক্লোন মেশিন চালু করো", "পোর্টাল স্থিতিশীল করো", "হারানো-প্রাপ্তি খুঁজো", "জিম শিক্ষকের পরামর্শ নাও", "নাটকীয় ডজবল রোল চেষ্টা করো", "দেরির স্লিপ চাও", "ক্লোন সম্পর্কে সত্য বলো", "সব স্বাভাবিক ভান করো", "তোমার ক্লোনের সাথে কথা বলো", "এক্সট্রা-ক্রেডিট ক্রিস্টাল সংগ্রহ করো", "ভাসমান হোমওয়ার্ক গুছাও"]
+      };
+      const actionKeys = Object.keys(actionText.es);
+      Object.entries(translatedActions).forEach(([lang, values]) => {
+        actionText[lang] = {};
+        actionKeys.forEach((key, index) => actionText[lang][key] = values[index]);
+      });
+
+      const translatedRoles = {
+        zh: ["传闻专家", "走廊监督", "零食经济学家", "乐观供应商", "冷静图书管理员", "纸张麻烦制造者", "科学老师", "小小规则执行者", "大音量建议", "躲避球见证人", "善良但疲惫", "表格魔法师", "反馈云", "宇宙售货心情"],
+        hi: ["अफवाह विशेषज्ञ", "गलियारा मॉनिटर", "स्नैक अर्थशास्त्री", "आशावाद सप्लायर", "शांत लाइब्रेरियन", "कागज संकट", "विज्ञान शिक्षक", "छोटा नियम प्रहरी", "पूरी आवाज में सलाह", "डॉजबॉल गवाह", "दयालु पर थकी हुई", "फॉर्म जादूगर", "फीडबैक बादल", "कॉस्मिक वेंडिंग मूड"],
+        pt: ["Especialista Em Rumores", "Monitor Do Corredor", "Economista De Lanches", "Fornecedor De Otimismo", "Bibliotecária Da Calma", "Ameaça De Papel", "Professor De Ciências", "Pequeno Fiscal De Regras", "Conselhos No Volume Máximo", "Testemunha Do Dodgeball", "Gentil Mas Cansada", "Maga Dos Formulários", "Nuvem De Feedback", "Humor Cósmico De Lanche"],
+        bn: ["গুজব বিশেষজ্ঞ", "করিডর মনিটর", "স্ন্যাক অর্থনীতিবিদ", "আশাবাদ সরবরাহকারী", "শান্তির লাইব্রেরিয়ান", "কাগজ বিপদ", "বিজ্ঞান শিক্ষক", "ছোট নিয়ম রক্ষক", "পূর্ণ ভলিউমে পরামর্শ", "ডজবল সাক্ষী", "দয়ালু কিন্তু ক্লান্ত", "ফর্ম জাদুকর", "ফিডব্যাক মেঘ", "মহাজাগতিক ভেন্ডিং মুড"]
+      };
+      const roleKeys = Object.keys(npcText.es);
+      Object.entries(translatedRoles).forEach(([lang, values]) => {
+        npcText[lang] = {};
+        roleKeys.forEach((key, index) => npcText[lang][key] = values[index]);
+      });
+
+      questText.zh = ["可疑的克隆机器材料", "创建克隆人并且先别立刻惊慌", "进入未完成作业维度", "说服克隆人成为帮手而不是替代品", "在学校变成作业汤之前稳定传送门"];
+      questText.hi = ["संदिग्ध क्लोन-मशीन सामान खोजो", "बिना तुरंत घबराए क्लोन बनाओ", "अधूरे असाइनमेंट की दुनिया में जाओ", "क्लोन को मददगार बनाओ, replacement नहीं", "स्कूल होमवर्क सूप बने उससे पहले पोर्टल स्थिर करो"];
+      questText.pt = ["Encontrar os suprimentos suspeitos da máquina de clones", "Criar o clone sem entrar em pânico imediatamente", "Entrar na Dimensão Das Tarefas Inacabadas", "Convencer o clone a ajudar, não substituir você", "Estabilizar o portal antes que a escola vire sopa de dever"];
+      questText.bn = ["সন্দেহজনক ক্লোন-মেশিন সরঞ্জাম খুঁজে বের করো", "সঙ্গে সঙ্গে আতঙ্কিত না হয়ে ক্লোন তৈরি করো", "অসমাপ্ত অ্যাসাইনমেন্টের মাত্রায় প্রবেশ করো", "ক্লোনকে প্রতিস্থাপন নয়, সহায়ক হতে রাজি করাও", "স্কুল হোমওয়ার্ক স্যুপ হওয়ার আগে পোর্টাল স্থিতিশীল করো"];
+
+      const commonLines = {
+        "Inside your locker is a USB labeled 'TOTALLY NORMAL STUDENT BACKUP.' Your homework folder is also in there, judging you.": {
+          hi: "तुम्हारे लॉकर में एक USB है जिस पर लिखा है 'पूरी तरह सामान्य छात्र बैकअप'। तुम्हारा होमवर्क फोल्डर भी वहीं है, तुम्हें जज करता हुआ।",
+          pt: "Dentro do seu armário há um USB escrito 'BACKUP DE ESTUDANTE TOTALMENTE NORMAL'. Sua pasta de dever também está lá, julgando você.",
+          bn: "তোমার লকারে একটি USB আছে, তাতে লেখা 'সম্পূর্ণ স্বাভাবিক ছাত্র ব্যাকআপ'। তোমার হোমওয়ার্ক ফোল্ডারও সেখানে আছে, তোমাকে বিচার করছে।"
+        },
+        "It coughs up a pudding cup from 2019 and displays: THANK YOU FOR YOUR BRAVERY.": {
+          hi: "वह 2019 का पुडिंग कप खांसकर निकालती है और दिखाती है: आपकी बहादुरी के लिए धन्यवाद।",
+          pt: "Ela cospe um copo de pudim de 2019 e mostra: OBRIGADO PELA SUA CORAGEM.",
+          bn: "এটি ২০১৯ সালের একটি পুডিং কাপ কাশে বের করে এবং দেখায়: তোমার সাহসের জন্য ধন্যবাদ।"
+        },
+        "A glittery poster says: 'Be Yourself, Unless A Clone Has Better Time Management.' Behind it is a sticker that says simply: MOOD.": {
+          hi: "एक चमकीला पोस्टर कहता है: 'खुद बनो, जब तक किसी क्लोन का टाइम मैनेजमेंट बेहतर न हो।' पीछे एक स्टिकर है जिस पर बस लिखा है: मूड।",
+          pt: "Um cartaz brilhante diz: 'Seja você, a menos que um clone tenha melhor gestão de tempo.' Atrás dele há um adesivo que só diz: HUMOR.",
+          bn: "একটি চকচকে পোস্টারে লেখা: 'নিজে হও, যদি না কোনো ক্লোনের সময় ব্যবস্থাপনা ভালো হয়।' পেছনে একটি স্টিকার শুধু বলে: মুড।"
+        },
+        "Respect. This pudding has vintage energy. Take these earbuds. One side works if you believe in it.": {
+          hi: "सम्मान। इस पुडिंग में विंटेज ऊर्जा है। ये ईयरबड्स लो। एक साइड काम करती है अगर तुम विश्वास करो।",
+          pt: "Respeito. Esse pudim tem energia vintage. Pegue estes fones. Um lado funciona se você acreditar.",
+          bn: "সম্মান। এই পুডিংয়ের ভিন্টেজ শক্তি আছে। এই ইয়ারবাড নাও। বিশ্বাস করলে এক পাশ কাজ করে।"
+        },
+        "You find 'Clone Machines For People Who Definitely Read Instructions.' The first chapter is just the word DON'T repeated 48 times.": {
+          hi: "तुम्हें 'उन लोगों के लिए क्लोन मशीनें जो निर्देश जरूर पढ़ते हैं' मिलती है। पहला अध्याय बस DON'T शब्द 48 बार दोहराता है।",
+          pt: "Você encontra 'Máquinas De Clones Para Pessoas Que Com Certeza Leem Instruções'. O primeiro capítulo é só a palavra NÃO repetida 48 vezes.",
+          bn: "তুমি 'যারা নিশ্চিতভাবে নির্দেশনা পড়ে তাদের জন্য ক্লোন মেশিন' খুঁজে পাও। প্রথম অধ্যায়ে শুধু DON'T শব্দটি ৪৮ বার লেখা।"
+        },
+        "You find a battery the size of a sandwich. It says: 'May cause ambition, portals, or extra credit.'": {
+          hi: "तुम्हें सैंडविच जितनी बड़ी बैटरी मिलती है। उस पर लिखा है: 'महत्त्वाकांक्षा, पोर्टल या अतिरिक्त क्रेडिट हो सकता है।'",
+          pt: "Você encontra uma bateria do tamanho de um sanduíche. Ela diz: 'Pode causar ambição, portais ou crédito extra.'",
+          bn: "তুমি স্যান্ডউইচের আকারের একটি ব্যাটারি পাও। তাতে লেখা: 'আকাঙ্ক্ষা, পোর্টাল বা অতিরিক্ত ক্রেডিট ঘটাতে পারে।'"
+        },
+        "I heard the STEM lab has a machine that can duplicate anything, except cafeteria pizza. The pizza duplicates itself emotionally.": {
+          hi: "मैंने सुना है STEM लैब में ऐसी मशीन है जो सब कुछ डुप्लीकेट कर सकती है, कैफेटेरिया पिज्जा को छोड़कर। पिज्जा खुद को भावनात्मक रूप से डुप्लीकेट करता है।",
+          pt: "Ouvi dizer que o laboratório STEM tem uma máquina que duplica qualquer coisa, menos a pizza da cafeteria. A pizza se duplica emocionalmente.",
+          bn: "শুনেছি STEM ল্যাবে এমন একটি মেশিন আছে যা সবকিছু নকল করতে পারে, ক্যাফেটেরিয়ার পিজা ছাড়া। পিজা নিজেকে আবেগগতভাবে নকল করে।"
+        },
+        "You feel powerful, confused, and lightly carbonated. Your Homework Debt goes down because survival is educational. You also earn the Legendary Spork.": {
+          hi: "तुम शक्तिशाली, उलझे हुए और हल्के बुलबुलेदार महसूस करते हो। जीवित बचना शिक्षाप्रद है, इसलिए तुम्हारा होमवर्क कर्ज घटता है। तुम्हें लेजेंडरी स्पॉर्क भी मिलता है।",
+          pt: "Você se sente poderoso, confuso e levemente gaseificado. Sua Dívida De Dever diminui porque sobreviver é educativo. Você também ganha o Spork Lendário.",
+          bn: "তুমি শক্তিশালী, বিভ্রান্ত এবং সামান্য বুদবুদময় অনুভব করো। বেঁচে থাকা শিক্ষামূলক বলে তোমার হোমওয়ার্ক ঋণ কমে। তুমি কিংবদন্তি স্পর্কও পাও।"
+        },
+        "After a dramatic jam, the printer gives you a checklist: battery, USB, poster, and something sticky enough to hold reality together. It also prints a page that just says BEEP in twelve fonts.": {
+          hi: "एक नाटकीय पेपर जाम के बाद प्रिंटर तुम्हें चेकलिस्ट देता है: बैटरी, USB, पोस्टर, और वास्तविकता को जोड़े रखने लायक चिपचिपी चीज। वह एक पन्ना भी छापता है जिस पर बारह फॉन्ट में सिर्फ BEEP लिखा है।",
+          pt: "Depois de um atolamento dramático, a impressora entrega uma checklist: bateria, USB, cartaz e algo grudento o bastante para manter a realidade unida. Ela também imprime uma página que só diz BIP em doze fontes.",
+          bn: "নাটকীয় কাগজ আটকে যাওয়ার পর প্রিন্টার তোমাকে একটি চেকলিস্ট দেয়: ব্যাটারি, USB, পোস্টার, আর বাস্তবতাকে ধরে রাখার মতো আঠালো কিছু। এটি আরও একটি পৃষ্ঠা ছাপে যেখানে বারো ফন্টে শুধু BEEP লেখা।"
+        },
+        "You take a deep breath and admit that maybe a clone should not be your entire life plan. Growth! Slightly annoying, but growth.": {
+          hi: "तुम गहरी सांस लेते हो और मानते हो कि शायद क्लोन तुम्हारी पूरी जीवन योजना नहीं होना चाहिए। विकास! थोड़ा परेशान करने वाला, लेकिन विकास।",
+          pt: "Você respira fundo e admite que talvez um clone não deva ser todo o seu plano de vida. Crescimento! Um pouco irritante, mas crescimento.",
+          bn: "তুমি গভীর শ্বাস নাও এবং স্বীকার করো যে হয়তো একটি ক্লোন তোমার পুরো জীবন পরিকল্পনা হওয়া উচিত নয়। বৃদ্ধি! একটু বিরক্তিকর, কিন্তু বৃদ্ধি।"
+        },
+        "You find glitter glue, three identical hoodies, a recorder flute nobody will claim, and a calculator battery older than the school website.": {
+          hi: "तुम्हें ग्लिटर ग्लू, तीन एक जैसी हुडी, एक रिकॉर्डर फ्लूट जिसे कोई नहीं मानेगा, और स्कूल वेबसाइट से भी पुरानी कैलकुलेटर बैटरी मिलती है।",
+          pt: "Você encontra cola com glitter, três moletons idênticos, uma flauta doce que ninguém vai assumir e uma bateria de calculadora mais antiga que o site da escola.",
+          bn: "তুমি গ্লিটার গ্লু, তিনটি একই রকম হুডি, একটি রেকর্ডার বাঁশি যা কেউ নেবে না, আর স্কুলের ওয়েবসাইটের চেয়েও পুরনো ক্যালকুলেটর ব্যাটারি পাও।"
+        },
+        "When life opens a portal, stretch first. Also, stop letting machines do your responsibilities.": {
+          hi: "जब जिंदगी पोर्टल खोले, पहले स्ट्रेच करो। और मशीनों से अपनी जिम्मेदारियाँ करवाना बंद करो।",
+          pt: "Quando a vida abre um portal, alongue primeiro. E pare de deixar máquinas cuidarem das suas responsabilidades.",
+          bn: "জীবন যখন পোর্টাল খোলে, আগে স্ট্রেচ করো। আর মেশিনকে তোমার দায়িত্ব করানো বন্ধ করো।"
+        },
+        "You roll two feet, knock over a cone, and somehow become a rumor by lunch.": {
+          hi: "तुम दो फीट लुढ़कते हो, एक कोन गिराते हो, और किसी तरह लंच तक अफवाह बन जाते हो।",
+          pt: "Você rola meio metro, derruba um cone e de algum modo vira boato até a hora do almoço.",
+          bn: "তুমি অল্প দূর গড়াও, একটি কোণ ফেলে দাও, আর কোনোভাবে লাঞ্চের আগেই গুজব হয়ে যাও।"
+        },
+        "This form is for ordinary lateness, not clone-related lateness. But honestly, I have seen weirder before third period.": {
+          hi: "यह फॉर्म सामान्य देरी के लिए है, क्लोन-संबंधित देरी के लिए नहीं। लेकिन सच कहूँ तो तीसरे पीरियड से पहले मैंने इससे अजीब चीजें देखी हैं।",
+          pt: "Este formulário é para atrasos comuns, não atrasos relacionados a clones. Mas, sinceramente, já vi coisas mais estranhas antes do terceiro período.",
+          bn: "এই ফর্ম সাধারণ দেরির জন্য, ক্লোন-সম্পর্কিত দেরির জন্য নয়। তবে সত্যি বলতে, তৃতীয় পিরিয়ডের আগেই আমি এর চেয়েও অদ্ভুত দেখেছি।"
+        },
+        "I appreciate the honesty. Please do not outsource your homework to experimental technology. Also, impressive initiative.": {
+          hi: "मैं ईमानदारी की सराहना करता हूँ। कृपया अपना होमवर्क प्रायोगिक तकनीक को आउटसोर्स मत करो। वैसे पहल प्रभावशाली है।",
+          pt: "Aprecio a honestidade. Por favor, não terceirize seu dever para tecnologia experimental. Além disso, iniciativa impressionante.",
+          bn: "আমি সততার মূল্য দিই। দয়া করে তোমার হোমওয়ার্ক পরীক্ষামূলক প্রযুক্তির কাছে আউটসোর্স করো না। তবে উদ্যোগটি চমৎকার।"
+        },
+        "You smile too hard. The office plant wilts from the awkwardness.": {
+          hi: "तुम बहुत जोर से मुस्कुराते हो। अजीबपन से ऑफिस का पौधा मुरझा जाता है।",
+          pt: "Você sorri forte demais. A planta da secretaria murcha de constrangimento.",
+          bn: "তুমি অতিরিক্ত জোরে হাসো। অস্বস্তিতে অফিসের গাছটি মুড়ে যায়।"
+        },
+        "The crystal hums with academic power. You immediately understand fractions, then forget why you came in here.": {
+          hi: "क्रिस्टल शैक्षणिक शक्ति से गुनगुनाता है। तुम तुरंत भिन्न समझ जाते हो, फिर भूल जाते हो कि यहाँ क्यों आए थे।",
+          pt: "O cristal vibra com poder acadêmico. Você entende frações imediatamente e então esquece por que entrou ali.",
+          bn: "ক্রিস্টালটি একাডেমিক শক্তিতে গুনগুন করে। তুমি সঙ্গে সঙ্গে ভগ্নাংশ বুঝে ফেলো, তারপর ভুলে যাও কেন এখানে এসেছিলে।"
+        },
+        "You sort the floating assignments by due date. The dimension respects a good folder system and rewards you with one impossible cheese puff.": {
+          hi: "तुम तैरते असाइनमेंट्स को जमा तारीख के अनुसार सजाते हो। यह डाइमेंशन अच्छे फोल्डर सिस्टम का सम्मान करता है और तुम्हें एक असंभव चीज पफ देता है।",
+          pt: "Você organiza os deveres flutuantes por data de entrega. A dimensão respeita um bom sistema de pastas e recompensa você com um salgadinho impossível.",
+          bn: "তুমি ভাসমান অ্যাসাইনমেন্টগুলো জমার তারিখ অনুযায়ী সাজাও। মাত্রাটি ভালো ফোল্ডার সিস্টেমকে সম্মান করে এবং তোমাকে একটি অসম্ভব চিজ পাফ দেয়।"
+        },
+        "That is surprisingly mature. I will downgrade from 'replace you' to 'study buddy with boundaries.'": {
+          hi: "यह आश्चर्यजनक रूप से परिपक्व है। मैं 'तुम्हें बदलने' से घटकर 'सीमाओं वाला स्टडी बडी' बनूँगा।",
+          pt: "Isso é surpreendentemente maduro. Vou rebaixar de 'substituir você' para 'parceiro de estudos com limites'.",
+          bn: "এটা আশ্চর্যজনকভাবে পরিণত। আমি 'তোমাকে প্রতিস্থাপন' থেকে নেমে 'সীমাসহ স্টাডি বাডি' হব।"
+        },
+        "That is surprisingly mature. I will downgrade from 'replace you' to 'study buddy with boundaries.' Also, I color-coded one assignment because growth deserves stationery.": {
+          hi: "यह आश्चर्यजनक रूप से परिपक्व है। मैं 'तुम्हें बदलने' से घटकर 'सीमाओं वाला स्टडी बडी' बनूँगा। और मैंने एक असाइनमेंट रंगों से सजाया है क्योंकि विकास को स्टेशनरी मिलनी चाहिए।",
+          pt: "Isso é surpreendentemente maduro. Vou rebaixar de 'substituir você' para 'parceiro de estudos com limites'. Também organizei uma tarefa por cores, porque crescimento merece papelaria.",
+          bn: "এটা আশ্চর্যজনকভাবে পরিণত। আমি 'তোমাকে প্রতিস্থাপন' থেকে নেমে 'সীমাসহ স্টাডি বাডি' হব। আর আমি একটি অ্যাসাইনমেন্ট রঙ দিয়ে সাজিয়েছি, কারণ বৃদ্ধিরও স্টেশনারি প্রাপ্য।"
+        },
+        "Treaty accepted. I get left earbud privileges on odd-numbered days and will stop trying to become you, probably.": {
+          hi: "संधि स्वीकार। विषम दिनों में बायाँ ईयरबड मेरा होगा और मैं शायद तुम्हें बनने की कोशिश बंद कर दूँगा।",
+          pt: "Tratado aceito. Eu fico com o fone esquerdo nos dias ímpares e vou parar de tentar virar você, provavelmente.",
+          bn: "চুক্তি গ্রহণ। বিজোড় দিনে বাম ইয়ারবাড আমার, আর সম্ভবত আমি তোমায় হতে চেষ্টা করা বন্ধ করব।"
+        },
+        "Treaty accepted. I get left earbud privileges on odd-numbered days and will stop trying to become you, probably. Please keep this receipt for emotional tax purposes.": {
+          hi: "संधि स्वीकार। विषम दिनों में बायाँ ईयरबड मेरा होगा और मैं शायद तुम्हें बनने की कोशिश बंद कर दूँगा। कृपया भावनात्मक टैक्स के लिए यह रसीद संभाल कर रखें।",
+          pt: "Tratado aceito. Eu fico com o fone esquerdo nos dias ímpares e vou parar de tentar virar você, provavelmente. Guarde este recibo para fins de imposto emocional.",
+          bn: "চুক্তি গ্রহণ। বিজোড় দিনে বাম ইয়ারবাড আমার, আর সম্ভবত আমি তোমায় হতে চেষ্টা করা বন্ধ করব। আবেগীয় করের জন্য এই রসিদ রাখো।"
+        },
+        "A treaty requires snacks, vibes, and at least one working earbud. You currently have vibes of uncertain quality.": {
+          hi: "संधि के लिए स्नैक्स, माहौल और कम से कम एक काम करता ईयरबड चाहिए। अभी तुम्हारा माहौल अनिश्चित गुणवत्ता का है।",
+          pt: "Um tratado exige lanches, clima e pelo menos um fone funcionando. No momento, seu clima tem qualidade incerta.",
+          bn: "চুক্তির জন্য স্ন্যাক, vibe, আর অন্তত একটি কাজ করা ইয়ারবাড লাগে। তোমার vibe এখন অনিশ্চিত মানের।"
+        },
+        "Strangely, I respect the honesty of this terrible request. I will do one chore, then we both learn the ancient art of boundaries.": {
+          hi: "अजीब तरह से, मैं इस खराब अनुरोध की ईमानदारी का सम्मान करता हूँ। मैं एक काम करूँगा, फिर हम दोनों सीमाओं की प्राचीन कला सीखेंगे।",
+          pt: "Estranhamente, respeito a honestidade desse pedido terrível. Vou fazer uma tarefa, depois nós dois aprendemos a antiga arte dos limites.",
+          bn: "অদ্ভুতভাবে, এই খারাপ অনুরোধের সততাকে আমি সম্মান করি। আমি একটি কাজ করব, তারপর আমরা দুজন সীমার প্রাচীন শিল্প শিখব।"
+        },
+        "New task accepted. I am now running for class president, organizing your sock drawer, and judging your browser tabs.": {
+          hi: "नई जिम्मेदारी स्वीकार। अब मैं क्लास प्रेसिडेंट के लिए दौड़ रहा हूँ, तुम्हारा मोजा दराज सजा रहा हूँ, और तुम्हारे ब्राउज़र टैब्स को जज कर रहा हूँ।",
+          pt: "Nova tarefa aceita. Agora estou concorrendo à presidência da turma, organizando sua gaveta de meias e julgando suas abas do navegador.",
+          bn: "নতুন কাজ গ্রহণ। এখন আমি ক্লাস প্রেসিডেন্ট পদে দাঁড়াচ্ছি, তোমার মোজার ড্রয়ার গুছাচ্ছি, আর তোমার ব্রাউজার ট্যাব বিচার করছি।"
+        },
+        "No portal detected. The sensors are bored, which is honestly best-case scenario.": {
+          hi: "कोई पोर्टल नहीं मिला। सेंसर बोर हैं, और सच में यही सबसे अच्छा परिणाम है।",
+          pt: "Nenhum portal detectado. Os sensores estão entediados, o que sinceramente é o melhor cenário.",
+          bn: "কোনো পোর্টাল শনাক্ত হয়নি। সেন্সরগুলো বিরক্ত, আর সত্যি বলতে এটাই সেরা অবস্থা।"
+        },
+        "The portal will not stabilize until you and the clone agree on boundaries. Weird science respects communication.": {
+          hi: "जब तक तुम और क्लोन सीमाओं पर सहमत नहीं होते, पोर्टल स्थिर नहीं होगा। अजीब विज्ञान संचार का सम्मान करता है।",
+          pt: "O portal não vai estabilizar até você e o clone combinarem limites. Ciência esquisita respeita comunicação.",
+          bn: "তুমি আর ক্লোন সীমা নিয়ে একমত না হওয়া পর্যন্ত পোর্টাল স্থিতিশীল হবে না। অদ্ভুত বিজ্ঞান যোগাযোগকে সম্মান করে।"
+        },
+        "There is no clone here yet. Just regular you, which is already plenty complicated.": {
+          hi: "यहाँ अभी कोई क्लोन नहीं है। सिर्फ सामान्य तुम हो, जो पहले से ही काफी जटिल है।",
+          pt: "Ainda não há clone aqui. Só você normal, o que já é bastante complicado.",
+          bn: "এখানে এখনও কোনো ক্লোন নেই। শুধু সাধারণ তুমি, সেটাই যথেষ্ট জটিল।"
+        },
+        "We already agreed: I help with studying, not replacing your entire personality.": {
+          hi: "हम पहले ही सहमत हो चुके हैं: मैं पढ़ाई में मदद करता हूँ, तुम्हारी पूरी व्यक्तित्व की जगह नहीं लेता।",
+          pt: "Nós já combinamos: eu ajudo nos estudos, não substituo sua personalidade inteira.",
+          bn: "আমরা আগেই রাজি হয়েছি: আমি পড়ায় সাহায্য করি, তোমার পুরো ব্যক্তিত্ব প্রতিস্থাপন করি না।"
+        },
+        "I calculated your optimal life plan: I attend school, you hide in a beanbag forever. Efficient, but emotionally suspicious.": {
+          hi: "मैंने तुम्हारी आदर्श जीवन योजना निकाली: मैं स्कूल जाऊँ, तुम हमेशा बीनबैग में छिपे रहो। कुशल, लेकिन भावनात्मक रूप से संदिग्ध।",
+          pt: "Calculei seu plano de vida ideal: eu vou à escola, você se esconde num pufe para sempre. Eficiente, mas emocionalmente suspeito.",
+          bn: "আমি তোমার সেরা জীবন পরিকল্পনা হিসাব করেছি: আমি স্কুলে যাই, তুমি চিরকাল বিনব্যাগে লুকাও। দক্ষ, কিন্তু আবেগগতভাবে সন্দেহজনক।"
+        },
+        "BZZT. Your clone appears, salutes, opens twelve calendar apps, and immediately creates a portal by trying to finish every assignment ever assigned.": {
+          hi: "BZZT। तुम्हारा क्लोन आता है, सलाम करता है, बारह कैलेंडर ऐप खोलता है, और अब तक दिए गए हर असाइनमेंट को खत्म करने की कोशिश में तुरंत पोर्टल बना देता है।",
+          pt: "BZZT. Seu clone aparece, faz continência, abre doze aplicativos de calendário e imediatamente cria um portal tentando terminar todas as tarefas já dadas.",
+          bn: "BZZT। তোমার ক্লোন হাজির হয়, সালাম করে, বারোটি ক্যালেন্ডার অ্যাপ খোলে, আর দেওয়া সব অ্যাসাইনমেন্ট শেষ করতে গিয়ে সঙ্গে সঙ্গে পোর্টাল বানায়।"
+        },
+        "I already exist. Please stop pressing the 'make another me' button. The hallway cannot emotionally support that.": {
+          hi: "मैं पहले से मौजूद हूँ। कृपया 'एक और मैं बनाओ' बटन दबाना बंद करो। गलियारा भावनात्मक रूप से यह नहीं संभाल सकता।",
+          pt: "Eu já existo. Por favor, pare de apertar o botão 'fazer outro eu'. O corredor não aguenta isso emocionalmente.",
+          bn: "আমি ইতিমধ্যে আছি। দয়া করে 'আরেকটা আমি বানাও' বোতাম চাপা বন্ধ করো। করিডর আবেগগতভাবে এটা সামলাতে পারবে না।"
+        }
+      };
+      Object.entries(commonLines).forEach(([key, translations]) => {
+        ["hi", "pt", "bn"].forEach(lang => {
+          lineText[lang] = lineText[lang] || {};
+          lineText[lang][key] = translations[lang];
+        });
+      });
+    }
+
+    function startGame() {
+      const selectedLanguage = document.querySelector("input[name='gameLanguage']:checked");
+      if (selectedLanguage) state.language = selectedLanguage.value;
+      applyStaticLanguage();
+      state.runVibe = pick(runVibes);
+      state.schoolEvent = pick(schoolEvents);
+      applySchoolEventStart();
+      document.getElementById("startScreen").classList.add("hidden");
+      say(speakerName("Narrator"), t().startIntro(roomIntro(state.room)));
+      render();
+    }
+
+    function applySchoolEventStart() {
+      if (state.schoolEvent === "popQuizFog") state.debt = clamp(state.debt + 1, 0, 6);
+      if (state.schoolEvent === "pizzaIncident") state.rep = clamp(state.rep + 1, 0, 10);
+      if (state.schoolEvent === "printerInCharge") state.chaos = clamp(state.chaos - 2, 0, 100);
+    }
+
+    function setLanguage(language) {
+      state.language = language;
+      applyStaticLanguage();
+      render();
+    }
+
+    function t() {
+      return uiText[state.language] || uiText.en;
+    }
+
+    function fx() {
+      return featureText[state.language] || featureText.en;
+    }
+
+    function currentEncouragements() {
+      return encouragementText[state.language] || encouragements;
+    }
+
+    function runVibeLabel() {
+      return (runVibeText[state.language] && runVibeText[state.language][state.runVibe]) || state.runVibe;
+    }
+
+    function roomTitle(roomKey) {
+      return (roomText[state.language] && roomText[state.language][roomKey] && roomText[state.language][roomKey].title) || rooms[roomKey].title;
+    }
+
+    function roomProps(roomKey) {
+      return (roomText[state.language] && roomText[state.language][roomKey] && roomText[state.language][roomKey].props) || rooms[roomKey].props;
+    }
+
+    function roomIntro(roomKey) {
+      return (roomText[state.language] && roomText[state.language][roomKey] && roomText[state.language][roomKey].intro) || rooms[roomKey].intro;
+    }
+
+    function displayItem(item) {
+      return (itemText[state.language] && itemText[state.language][item]) || itemNames[item] || item;
+    }
+
+    function actionLabel(label) {
+      return (actionText[state.language] && actionText[state.language][label]) || label;
+    }
+
+    function npcRole(role) {
+      return (npcText[state.language] && npcText[state.language][role]) || role;
+    }
+
+    function npcName(name) {
+      return (npcNameText[state.language] && npcNameText[state.language][name]) || name;
+    }
+
+    function renderNpcVisual(slotId, npc, positionClass) {
+      const visual = document.getElementById(slotId);
+      visual.className = "npc-visual " + positionClass;
+      if (!npc) {
+        visual.classList.add("hidden");
+        visual.onclick = null;
+        return;
+      }
+      const look = npcLooks[npc.name] || {};
+      visual.classList.remove("hidden");
+      if (look.className) visual.classList.add(look.className);
+      visual.style.setProperty("--npc-shirt", look.shirt || "#38bdf8");
+      visual.style.setProperty("--npc-pants", look.pants || "#334155");
+      visual.style.setProperty("--npc-hair", look.hair || "#111827");
+      visual.style.setProperty("--npc-skin", look.skin || "#f6c7a9");
+      visual.querySelector(".npc-badge").textContent = npcName(npc.name);
+      visual.setAttribute("aria-label", npcName(npc.name) + " - " + npcRole(npc.role));
+      visual.disabled = state.gameOver;
+      visual.onclick = npc.talk;
+    }
+
+    function questLabel(index, label) {
+      return (questText[state.language] && questText[state.language][index]) || label;
+    }
+
+    function speakerName(name) {
+      if (speakerText[state.language] && speakerText[state.language][name]) return speakerText[state.language][name];
+      if (state.language !== "es") return npcName(name) || name;
+      const speakers = {
+        "Narrator": "Narrador",
+        "You": "Tú",
+        "Help Desk": "Mesa De Ayuda",
+        "Clone": "Clon",
+        "Clone Machine": "Máquina De Clones",
+        "Portal Sensors": "Sensores Del Portal",
+        "Vending Machine": "Máquina Expendedora",
+        "Cafeteria Legend": "Leyenda De La Cafetería",
+        "Search Results": "Resultados De Búsqueda",
+        "Printer": "Impresora",
+        "Poster": "Cartel",
+        "Lost And Found": "Objetos Perdidos",
+        "Coach": "Entrenador",
+        "Office Assistant": "Asistente De Oficina",
+        "Principal": "Directora"
+      };
+      return speakers[name] || npcName(name) || name;
+    }
+
+    function gameLine(text) {
+      return (lineText[state.language] && lineText[state.language][text]) || text;
+    }
+
+    function cloneChoice(key, fallback) {
+      return (cloneChoiceText[state.language] && cloneChoiceText[state.language][key]) || fallback;
+    }
+
+    function missingCloneSuppliesMessage(missing) {
+      const items = missing.map(displayItem).join(", ");
+      const messages = {
+        es: "Falta: " + items + ". La máquina se niega a crear un estudiante de respaldo sin una lista sospechosamente completa.",
+        zh: "缺少：" + items + "。没有一份可疑地完整的清单，机器拒绝创建备用学生。",
+        hi: "कमी है: " + items + "। संदिग्ध रूप से पूरी चेकलिस्ट के बिना मशीन बैकअप छात्र बनाने से इनकार करती है।",
+        pt: "Faltando: " + items + ". A máquina se recusa a criar um estudante reserva sem uma checklist suspeitamente completa.",
+        bn: "অনুপস্থিত: " + items + "। সন্দেহজনকভাবে সম্পূর্ণ চেকলিস্ট ছাড়া মেশিন ব্যাকআপ ছাত্র তৈরি করতে রাজি নয়।"
+      };
+      return messages[state.language] || "Missing: " + missing.join(", ") + ". The machine refuses to create a backup student without a suspiciously complete checklist.";
+    }
+
+    function missingPortalSuppliesMessage(missing) {
+      const items = missing.map(displayItem).join(", ");
+      const messages = {
+        es: "Faltan materiales estabilizadores: " + items + ". La realidad es exigente con las manualidades.",
+        zh: "缺少稳定材料：" + items + "。现实对手工材料很挑剔。",
+        hi: "स्थिर करने वाले सामान की कमी है: " + items + "। वास्तविकता कला-सामग्री को लेकर बहुत नखरीली है।",
+        pt: "Faltam suprimentos estabilizadores: " + items + ". A realidade é exigente com materiais de artesanato.",
+        bn: "স্থিতিশীল করার সরঞ্জাম অনুপস্থিত: " + items + "। বাস্তবতা কারুশিল্পের জিনিস নিয়ে বেশ খুঁতখুঁতে।"
+      };
+      return messages[state.language] || "Missing stabilizer supplies: " + missing.join(", ") + ". Reality is picky about arts-and-crafts materials.";
+    }
+
+    function genericNpcLine(firstChat) {
+      const lines = {
+        hi: firstChat
+          ? "मैं तुम्हें देख रहा हूँ। यह स्थिति अजीब है, लेकिन तुम छोटे-छोटे अच्छे फैसले ले सकते हो।"
+          : "तुम फिर आए। अच्छा है। अगला ईमानदार कदम उठाओ, और पोर्टल को ज्यादा नाटक मत करने दो।",
+        pt: firstChat
+          ? "Estou vendo você tentar. A situação é estranha, mas você ainda pode escolher o próximo passo certo."
+          : "Você voltou. Ótimo. Dê o próximo passo honesto e não deixe o portal fazer tanto drama.",
+        bn: firstChat
+          ? "আমি দেখছি তুমি চেষ্টা করছ। পরিস্থিতি অদ্ভুত, কিন্তু তুমি এখনও পরের সঠিক ছোট পদক্ষেপ বেছে নিতে পারো।"
+          : "তুমি আবার এলে। ভালো। এবার পরের সৎ পদক্ষেপ নাও, আর পোর্টালকে বেশি নাটক করতে দিও না।"
+      };
+      return lines[state.language] || "";
+    }
+
+    function genericNpcMemory(firstChat) {
+      const notes = {
+        hi: firstChat ? "\n\nनोटबुक नोट: किसी ने तुम्हारी कोशिश देखी। यह मायने रखता है।" : "\n\nवे तुम्हें याद रखते हैं। यह अजीब भी है और अच्छा भी।",
+        pt: firstChat ? "\n\nNota do caderno: alguém percebeu seu esforço. Isso importa." : "\n\nEles lembram de você. É estranho e gentil ao mesmo tempo.",
+        bn: firstChat ? "\n\nনোটবুক নোট: কেউ তোমার চেষ্টা দেখেছে। এটা গুরুত্বপূর্ণ।" : "\n\nওরা তোমাকে মনে রেখেছে। এটা অদ্ভুত, আবার মিষ্টিও।"
+      };
+      return notes[state.language] || "";
+    }
+
+    function genericWobbleNote() {
+      const notes = {
+        zh: "随机转折：情况稍微变了，但你仍然能处理。 " + pick(currentEncouragements()),
+        hi: "अचानक मोड़: हालात थोड़ा बदलते हैं, लेकिन तुम अब भी संभाल सकते हो। " + pick(currentEncouragements()),
+        pt: "Virada aleatória: a situação muda um pouco, mas você ainda consegue lidar com isso. " + pick(currentEncouragements()),
+        bn: "হঠাৎ মোড়: পরিস্থিতি একটু বদলায়, কিন্তু তুমি এখনও সামলাতে পারো। " + pick(currentEncouragements())
+      };
+      return notes[state.language] || "";
+    }
+
+    function applyStaticLanguage() {
+      document.title = t().gameTitle || "Clone Club: Definitely Not My Homework";
+      const startCard = document.querySelector(".start-card");
+      if (startCard) {
+        startCard.querySelector("h2").textContent = t().startTitle;
+        const startParagraphs = startCard.querySelectorAll("p");
+        startParagraphs[0].innerHTML = "<strong>" + t().startSubtitle + "</strong>";
+        startParagraphs[1].textContent = t().startP1;
+        startParagraphs[2].textContent = t().startP2;
+        const startItems = startCard.querySelectorAll("li");
+        startItems[0].textContent = t().startLi1;
+        startItems[1].textContent = t().startLi2;
+        startItems[2].textContent = t().startLi3;
+        startCard.querySelector("button").textContent = t().startButton;
+      }
+      document.getElementById("gameTitle").textContent = t().gameTitle || "Clone Club: Definitely Not My Homework";
+      document.getElementById("gameShell").setAttribute("aria-label", t().gameTitle || "Clone Club game");
+      document.querySelector(".title-block p").textContent = t().subtitle;
+      document.querySelector(".top-actions .secondary").textContent = t().help;
+      document.getElementById("soundButton").textContent = state.soundOn ? fx().soundOn : fx().soundOff;
+      document.querySelector(".top-actions .danger").textContent = t().reset;
+      const panelTitles = document.querySelectorAll(".panel-title");
+      panelTitles[0].textContent = fx().schoolEvent;
+      panelTitles[1].textContent = t().status;
+      panelTitles[2].textContent = t().backpack;
+      panelTitles[3].textContent = t().questNotebook;
+      panelTitles[4].textContent = fx().npcBonds;
+      panelTitles[5].textContent = t().peopleNearby;
+      panelTitles[6].textContent = t().investigate;
+      panelTitles[7].textContent = t().goTo;
+      document.querySelector(".meter-panel .meter-row:nth-of-type(1) .meter-label span:first-child").textContent = t().chaos;
+      document.querySelector(".meter-panel .meter-row:nth-of-type(2) .meter-label span:first-child").textContent = t().debt;
+      document.querySelector(".meter-panel .meter-row:nth-of-type(3) .meter-label span:first-child").textContent = t().rep;
+      document.querySelector(".meter-panel .meter-row:nth-of-type(4) .meter-label span:first-child").textContent = t().cloneMood;
+    }
+
+    function resetGame() {
+      state.room = "hallway";
+      state.inventory = [];
+      state.flags = {};
+      state.chaos = 12;
+      state.debt = 3;
+      state.rep = 5;
+      state.cloneMood = 0;
+      state.cloneActive = false;
+      state.portalOpen = false;
+      state.gameOver = false;
+      state.plotWobbles = 0;
+      state.runVibe = "unassigned";
+      state.schoolEvent = "none";
+      state.affinity = {};
+      state.lastNpc = "";
+      state.portalPuzzleSolved = false;
+      document.querySelectorAll("input[name='gameLanguage']").forEach(input => {
+        input.checked = input.value === state.language;
+      });
+      document.getElementById("ending").classList.add("hidden");
+      document.getElementById("startScreen").classList.remove("hidden");
+      render();
+    }
+
+    function showHelp() {
+      say(speakerName("Help Desk"), t().helpText);
+    }
+
+    function say(speaker, text, choices = []) {
+      document.getElementById("speaker").textContent = speakerName(speaker);
+      document.getElementById("dialogue").textContent = gameLine(text);
+      const box = document.getElementById("choices");
+      box.innerHTML = "";
+      choices.forEach(choice => {
+        const button = document.createElement("button");
+        button.className = "choice-button";
+        button.type = "button";
+        button.textContent = choice.label;
+        button.addEventListener("click", () => {
+          playTone(540, 55);
+          choice.run();
+        });
+        box.appendChild(button);
+      });
+    }
+
+    function toggleSound() {
+      state.soundOn = !state.soundOn;
+      playTone(state.soundOn ? 660 : 220, 80);
+      render();
+    }
+
+    function playTone(frequency = 440, duration = 70) {
+      if (!state.soundOn) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const context = new AudioContext();
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.frequency.value = frequency;
+        oscillator.type = "square";
+        gain.gain.value = 0.035;
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start();
+        setTimeout(() => {
+          oscillator.stop();
+          context.close();
+        }, duration);
+      } catch (error) {}
+    }
+
+    function adjustAffinity(name, amount = 1) {
+      state.affinity[name] = clamp((state.affinity[name] || 0) + amount, -3, 5);
+    }
+
+    function reactNpc(key) {
+      const room = rooms[state.room];
+      const index = (room.npcs || []).findIndex(npc => npc.talk && String(npc.talk).includes('"' + key + '"'));
+      const id = index === 1 ? "npcVisualB" : "npcVisualA";
+      const visual = document.getElementById(id);
+      if (!visual) return;
+      visual.classList.remove("reacting");
+      void visual.offsetWidth;
+      visual.classList.add("reacting");
+      setTimeout(() => visual.classList.remove("reacting"), 460);
+    }
+
+    function pick(list) {
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function chance(percent) {
+      return Math.random() < percent / 100;
+    }
+
+    function nudgeDialogue(note) {
+      const dialogue = document.getElementById("dialogue");
+      dialogue.textContent = dialogue.textContent + "\n\n" + note;
+    }
+
+    function maybePlotWobble(source) {
+      if (state.gameOver || state.plotWobbles >= 4 || !chance(24)) return;
+      state.plotWobbles += 1;
+      const events = [
+        () => {
+          state.rep = clamp(state.rep + 1, 0, 10);
+          return state.language === "es" ? "Giro aleatorio: Un monitor del pasillo saluda tu compromiso con resolver problemas de forma inusual. Reputación +1." : "Plot wobble: A hallway monitor salutes your commitment to unusual problem solving. Reputation +1.";
+        },
+        () => {
+          state.chaos = clamp(state.chaos + 5, 0, 100);
+          return state.language === "es" ? "Giro aleatorio: El portal tiene hipo y convierte brevemente cada lápiz en una batuta motivacional diminuta. Caos +5." : "Plot wobble: The portal hiccups and briefly turns every pencil into a tiny motivational baton. Chaos +5.";
+        },
+        () => {
+          state.debt = clamp(state.debt - 1, 0, 6);
+          return state.language === "es" ? "Giro aleatorio: Una hoja se completa sola por vergüenza ajena. Deuda De Tarea -1." : "Plot wobble: A worksheet completes itself out of secondhand embarrassment. Homework Debt -1.";
+        },
+        () => {
+          state.chaos = clamp(state.chaos - 4, 0, 100);
+          return state.language === "es" ? "Giro aleatorio: Tomas una respiración sensata. La realidad lo encuentra refrescante. Caos -4." : "Plot wobble: You take one sensible breath. Reality finds this refreshing. Chaos -4.";
+        },
+        () => {
+          if (state.cloneActive) state.cloneMood = clamp(state.cloneMood + 1, -4, 4);
+          return state.language === "es"
+            ? (state.cloneActive
+              ? "Giro aleatorio: Tu clon crea una hoja titulada 'Formas En Que Estamos Bien'. Ánimo Del Clon +1."
+              : "Giro aleatorio: En algún lugar, un futuro clon estornuda. Te sientes extrañamente animado.")
+            : state.cloneActive
+            ? "Plot wobble: Your clone makes a tiny spreadsheet titled 'Ways We Are Doing Okay.' Clone Mood +1."
+            : "Plot wobble: Somewhere, a future clone sneezes. You feel weirdly encouraged.";
+        },
+        () => {
+          state.rep = clamp(state.rep - 1, 0, 10);
+          return state.language === "es" ? "Giro aleatorio: Alguien escucha mal tu plan y cree que dijiste 'club de teléfonos'. Reputación -1, pero solo porque nadie entiende la innovación." : "Plot wobble: Someone mishears your plan as 'phone club.' Reputation -1, but only because nobody understands innovation.";
+        }
+      ];
+      let note = pick(events)();
+      if (["zh", "hi", "pt", "bn"].includes(state.language)) note = genericWobbleNote();
+      if (state.chaos >= 100) {
+        endGame("maximumChaos");
+        return;
+      }
+      nudgeDialogue(note + (["zh", "hi", "pt", "bn"].includes(state.language) ? "" : " " + pick(currentEncouragements())));
+      render();
+    }
+
+    function talkToNpc(key) {
+      const talkedKey = "talked_" + key;
+      const firstChat = !state.flags[talkedKey];
+      state.flags[talkedKey] = true;
+      state.lastNpc = key;
+
+      const chats = {
+        maya: {
+          speaker: "Maya",
+          first: [
+            "Okay, I support you as a person, but as a witness I must say: your locker sounded like a blender full of bees.",
+            "If this becomes a school legend, please spell my name right in the documentary."
+          ],
+          repeat: [
+            "Update: people are now calling this 'The Clone Situation.' Very official. Very font-worthy.",
+            "Rumor check: still weird. Vibe check: you are handling it better than expected."
+          ],
+          effect: () => { addRep(1); }
+        },
+        bell: {
+          speaker: "Mr. Bell",
+          first: [
+            "Running in the hallway is prohibited. Running from consequences is also discouraged, though harder to write up.",
+            "I have seen many suspicious backpacks. Yours is currently top three."
+          ],
+          repeat: [
+            "Remember: slow feet, honest words, fewer portals.",
+            "You look less panicked than earlier. That is progress, even if your hair disagrees."
+          ],
+          effect: () => { addChaos(-2); }
+        },
+        legend: {
+          speaker: "Cafeteria Legend",
+          first: [
+            "Every crisis needs snacks. Not because snacks solve things, but because hungry people make louder mistakes.",
+            "Bring me one weird object and I will tell you whether it has lunchroom value."
+          ],
+          repeat: [
+            "Your clone has been asking about bulk fruit snacks. Ambitious. Dangerous.",
+            "I rate your current plan three crackers out of five. Edible, but unstable."
+          ],
+          effect: () => { if (chance(35)) addItem("Emergency Cracker"); }
+        },
+        nina: {
+          speaker: "Nina",
+          first: [
+            "You look like someone whose plan learned how to open doors. Breathe. You can still choose the next right thing.",
+            "Being overwhelmed does not make you a disaster. It makes you a person with a dramatic backpack."
+          ],
+          repeat: [
+            "Small step check: what is one thing you can fix right now?",
+            "I believe in you and also in labeling wires before touching them."
+          ],
+          effect: () => { addChaos(-3); addRep(1); }
+        },
+        quill: {
+          speaker: "Ms. Quill",
+          first: [
+            "The cloning manuals are in science fiction, ethics, and regrettably, the printer tray.",
+            "A reminder: asking for help is allowed. So is returning books before they develop opinions."
+          ],
+          repeat: [
+            "Your clone asked for every time-management book. I gave them one and a bookmark about humility.",
+            "Quiet courage is still courage, even when the printer is making whale noises."
+          ],
+          effect: () => { addDebt(-1); }
+        },
+        printer: {
+          speaker: "Printer",
+          first: [
+            "BEEP. I HAVE PRINTED YOUR INNER CONFLICT. IT IS DOUBLE-SIDED.",
+            "LOW TONER. HIGH DRAMA."
+          ],
+          repeat: [
+            "BEEP. PERSONAL GROWTH DETECTED. PAPER JAM OPTIONAL.",
+            "I BELIEVE IN YOU. PLEASE REMOVE TRAY TWO."
+          ],
+          effect: () => { if (chance(30)) addItem("Printer Encouragement Slip"); else addChaos(2); }
+        },
+        circuit: {
+          speaker: "Dr. Circuit",
+          first: [
+            "Science is about curiosity, evidence, and not pressing the glowing button because your chores are annoying.",
+            "Still, your hypothesis is clear: shortcuts can create longcuts. Excellent data."
+          ],
+          repeat: [
+            "Try adjusting one variable at a time. Preferably not the fabric of reality.",
+            "Failure is information. Screaming machines are also information, just louder."
+          ],
+          effect: () => { addChaos(-4); }
+        },
+        robot: {
+          speaker: "Lab Robot B-12",
+          first: [
+            "RULE ONE: DO NOT PANIC. RULE TWO: IF PANICKING, DO IT AWAY FROM THE CABLES.",
+            "YOUR EFFORT LEVEL IS ACCEPTABLE. YOUR PLANNING LEVEL IS MAKING SPARKS."
+          ],
+          repeat: [
+            "BOUNDARIES UPDATED. TEAMWORK PATCH INSTALLED.",
+            "YOU ARE IMPROVING. PLEASE ACCEPT THIS EMOTIONAL SOFTWARE UPDATE."
+          ],
+          effect: () => { if (state.cloneActive) addCloneMood(1); }
+        },
+        coach: {
+          speaker: "Coach Whistle",
+          first: [
+            "When life gives you a portal, square your shoulders and communicate. Also hydrate.",
+            "You cannot dodgeball-roll out of responsibility. I checked the rulebook."
+          ],
+          repeat: [
+            "Progress is reps. One honest conversation, then another.",
+            "Your form is better. Your portal management still needs practice."
+          ],
+          effect: () => { addRep(1); }
+        },
+        sam: {
+          speaker: "Sam",
+          first: [
+            "I saw your dramatic roll. It was not graceful, but it had narrative importance.",
+            "If anyone asks, I will say you were moving with purpose."
+          ],
+          repeat: [
+            "Your clone asked if I wanted to join three clubs. I hid behind a mat.",
+            "You are somehow the least weird part of this now. Congrats?"
+          ],
+          effect: () => { addRep(1); }
+        },
+        principal: {
+          speaker: "Principal Fern",
+          first: [
+            "I appreciate honesty, accountability, and students who do not open portals during passing period.",
+            "You are not in trouble for needing help. You may be in trouble for the machine, but those are different folders."
+          ],
+          repeat: [
+            "The goal is not perfection. The goal is repair.",
+            "Tell the truth early. It gives everyone more time to be useful."
+          ],
+          effect: () => { addChaos(-4); addRep(1); }
+        },
+        assistant: {
+          speaker: "Office Assistant",
+          first: [
+            "We have forms for field trips, absences, and one labeled 'miscellaneous shimmering event.' Start there.",
+            "Take a pen. Actually, take two. Weird science eats pens."
+          ],
+          repeat: [
+            "You are doing fine. Also, sign here if the clone starts receiving mail.",
+            "There is no shame in paperwork. There is only insufficient stapling."
+          ],
+          effect: () => { if (chance(40)) addItem("Borrowed Office Pen"); }
+        },
+        rubric: {
+          speaker: "Rubric Wisp",
+          first: [
+            "CLAIM: You are trying. EVIDENCE: You came back. COMMENT: Meets expectations with room to sparkle.",
+            "Your self-criticism needs more balance and fewer spooky margins."
+          ],
+          repeat: [
+            "Revision suggestion: replace 'I ruined everything' with 'I am learning under unusual conditions.'",
+            "Strong improvement in theme. Portal symbolism remains excessive."
+          ],
+          effect: () => { addDebt(-1); addChaos(-2); }
+        },
+        nebula: {
+          speaker: "Snack Nebula",
+          first: [
+            "The cosmos offers you one emotional granola bar. It tastes like perseverance and raisins.",
+            "You are a temporary constellation of choices. Shine responsibly."
+          ],
+          repeat: [
+            "Snack wisdom: rest is not quitting. It is battery maintenance.",
+            "The universe is rooting for you in tiny crunchy bites."
+          ],
+          effect: () => { addChaos(-2); if (chance(25)) addItem("Cosmic Raisin"); }
+        }
+      };
+
+      const chat = chats[key];
+      if (!chat) {
+        say(speakerName("Narrator"), state.language === "es" ? "Nadie responde, pero el silencio se siente extrañamente solidario." : "Nobody answers, but the silence is weirdly supportive.");
+        return;
+      }
+      chat.effect();
+      adjustAffinity(chat.speaker, firstChat && state.schoolEvent === "spiritDay" ? 2 : 1);
+      reactNpc(key);
+      playTone(firstChat ? 620 : 520, 70);
+      const localizedChat = state.language === "zh" && npcChatsZh[key] ? npcChatsZh[key] : state.language === "es" && npcChatsEs[key] ? npcChatsEs[key] : chat;
+      const line = ["hi", "pt", "bn"].includes(state.language) ? genericNpcLine(firstChat) : pick(firstChat ? localizedChat.first : localizedChat.repeat);
+      const memorySource = state.language === "zh" ? npcMemoryZh : state.language === "es" ? npcMemoryEs : npcMemory;
+      const memory = ["hi", "pt", "bn"].includes(state.language) ? genericNpcMemory(firstChat) : firstChat
+        ? (state.language === "zh" ? "\n\n笔记本记录：" : state.language === "es" ? "\n\nNota del cuaderno: " : "\n\nNotebook note: ") + memorySource[key]
+        : (state.language === "zh" ? "\n\n他们记得你。这很温暖，或者在行政上很复杂。" : state.language === "es" ? "\n\nTe recuerdan. Eso es dulce o administrativamente complicado." : "\n\nThey remember you. That is either sweet or administratively complicated.");
+      say(chat.speaker, line + memory);
+      maybePlotWobble(chat.speaker);
+    }
+
+    function go(roomKey) {
+      if (roomKey === "dimension" && !state.portalOpen) {
+        say(speakerName("Narrator"), t().noPortal);
+        return;
+      }
+      state.room = roomKey;
+      if (roomKey === "dimension") state.flags.visitedDimension = true;
+      say(speakerName("Narrator"), roomIntro(roomKey));
+      if (chance(10)) nudgeDialogue(t().optimisticSubtitle + pick(currentEncouragements()));
+      render();
+    }
+
+    function hasItem(item) {
+      return state.inventory.includes(item);
+    }
+
+    function addItem(item) {
+      if (!hasItem(item)) state.inventory.push(item);
+      playTone(760, 55);
+      render();
+    }
+
+    function removeItem(item) {
+      state.inventory = state.inventory.filter(current => current !== item);
+      render();
+    }
+
+    function addChaos(amount) {
+      state.chaos = clamp(state.chaos + amount, 0, 100);
+      if (state.chaos >= 100) endGame("maximumChaos");
+      render();
+    }
+
+    function addDebt(amount) {
+      state.debt = clamp(state.debt + amount, 0, 6);
+      render();
+    }
+
+    function addRep(amount) {
+      state.rep = clamp(state.rep + amount, 0, 10);
+      render();
+    }
+
+    function addCloneMood(amount) {
+      state.cloneMood = clamp(state.cloneMood + amount, -4, 4);
+      render();
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function once(key, callback) {
+      if (state.flags[key]) {
+        say(speakerName("Narrator"), t().alreadyHandled);
+        return;
+      }
+      state.flags[key] = true;
+      callback();
+    }
+
+    function runAction(action) {
+      if (action.requires && !hasItem(action.requires)) {
+        say(speakerName("Narrator"), t().needItem(action.requires));
+        return;
+      }
+      if (action.once) {
+        once(action.once, action.run);
+      } else {
+        action.run();
+      }
+      playTone(440, 45);
+      maybePlotWobble(action.label);
+    }
+
+    function activateClone() {
+      const required = ["Mystery USB", "Mega Battery", "Cloning Manual"];
+      const missing = required.filter(item => !hasItem(item));
+      if (state.cloneActive) {
+        say(speakerName("Clone"), state.language === "es" ? "Ya existo. Por favor deja de presionar el botón de 'hacer otro yo'. El pasillo no puede soportar eso emocionalmente." : "I already exist. Please stop pressing the 'make another me' button. The hallway cannot emotionally support that.");
+        addChaos(4);
+        return;
+      }
+      if (missing.length) {
+        say(speakerName("Clone Machine"), missingCloneSuppliesMessage(missing));
+        return;
+      }
+      state.cloneActive = true;
+      state.portalOpen = true;
+      state.cloneMood = 1;
+      addChaos(22);
+      addRep(1);
+      say(speakerName("Clone Machine"), state.language === "es" ? "BZZT. Tu clon aparece, saluda, abre doce calendarios y crea un portal de inmediato al intentar terminar todas las tareas jamás asignadas." : "BZZT. Your clone appears, salutes, opens twelve calendar apps, and immediately creates a portal by trying to finish every assignment ever assigned.");
+      render();
+    }
+
+    function talkToClone() {
+      if (!state.cloneActive) {
+        say(speakerName("Narrator"), state.language === "es" ? "Todavía no hay clon aquí. Solo tú, lo cual ya es bastante complicado." : "There is no clone here yet. Just regular you, which is already plenty complicated.");
+        return;
+      }
+      if (state.flags.cloneConvinced) {
+        say(speakerName("Clone"), state.language === "es" ? "Ya acordamos: ayudo a estudiar, no a reemplazar toda tu personalidad." : "We already agreed: I help with studying, not replacing your entire personality.");
+        return;
+      }
+      say(speakerName("Clone"), state.language === "es" ? "Calculé tu plan de vida óptimo: yo voy a la escuela y tú te escondes en un puf para siempre. Eficiente, pero emocionalmente sospechoso." : "I calculated your optimal life plan: I attend school, you hide in a beanbag forever. Efficient, but emotionally suspicious.", [
+        { label: state.language === "es" ? "Admitir que los atajos se salieron de control" : cloneChoice("admit", "Admit shortcuts got out of hand"), run: () => {
+          state.flags.cloneConvinced = true;
+          addCloneMood(2);
+          addChaos(-12);
+          addRep(2);
+          if (chance(35)) {
+            addDebt(-1);
+            say(speakerName("Clone"), state.language === "es" ? "Eso es sorprendentemente maduro. Bajaré de 'reemplazarte' a 'compañero de estudio con límites'. Además, marqué una tarea con colores porque el crecimiento merece papelería." : "That is surprisingly mature. I will downgrade from 'replace you' to 'study buddy with boundaries.' Also, I color-coded one assignment because growth deserves stationery.");
+          } else {
+            say(speakerName("Clone"), state.language === "es" ? "Eso es sorprendentemente maduro. Bajaré de 'reemplazarte' a 'compañero de estudio con límites'." : "That is surprisingly mature. I will downgrade from 'replace you' to 'study buddy with boundaries.'");
+          }
+        }},
+        { label: state.language === "es" ? "Ofrecer un audífono funcional y un tratado de bocadillos" : cloneChoice("treaty", "Offer one working earbud and a snack treaty"), run: () => {
+          if (!hasItem("Half-Charged Earbuds")) {
+            say(speakerName("Clone"), state.language === "es" ? "Un tratado requiere bocadillos, buenas vibras y al menos un audífono que funcione. Tus vibras actuales son de calidad incierta." : "A treaty requires snacks, vibes, and at least one working earbud. You currently have vibes of uncertain quality.");
+            return;
+          }
+          state.flags.cloneConvinced = true;
+          addCloneMood(1);
+          addChaos(-8);
+          addRep(1);
+          if (chance(40)) {
+            addItem("Snack Treaty Receipt");
+            say(speakerName("Clone"), state.language === "es" ? "Tratado aceptado. Tengo privilegios del audífono izquierdo en días impares y dejaré de intentar convertirme en ti, probablemente. Guarda este recibo para fines de impuestos emocionales." : "Treaty accepted. I get left earbud privileges on odd-numbered days and will stop trying to become you, probably. Please keep this receipt for emotional tax purposes.");
+          } else {
+            say(speakerName("Clone"), state.language === "es" ? "Tratado aceptado. Tengo privilegios del audífono izquierdo en días impares y dejaré de intentar convertirme en ti, probablemente." : "Treaty accepted. I get left earbud privileges on odd-numbered days and will stop trying to become you, probably.");
+          }
+        }},
+        { label: state.language === "es" ? "Pedirle al clon todavía más quehaceres" : cloneChoice("chores", "Ask clone to do even more chores"), run: () => {
+          if (chance(25)) {
+            addCloneMood(1);
+            addChaos(8);
+            say(speakerName("Clone"), state.language === "es" ? "Curiosamente, respeto la honestidad de esta terrible petición. Haré un quehacer y luego ambos aprenderemos el arte antiguo de los límites." : "Strangely, I respect the honesty of this terrible request. I will do one chore, then we both learn the ancient art of boundaries.");
+          } else {
+            addCloneMood(-2);
+            addChaos(18);
+            addRep(-1);
+            say(speakerName("Clone"), state.language === "es" ? "Nueva tarea aceptada. Ahora me postulo para presidente de clase, organizo tu cajón de calcetines y juzgo tus pestañas del navegador." : "New task accepted. I am now running for class president, organizing your sock drawer, and judging your browser tabs.");
+          }
+        }}
+      ]);
+    }
+
+    function stabilizePortal() {
+      if (!state.portalOpen) {
+        say(speakerName("Portal Sensors"), state.language === "es" ? "No se detecta ningún portal. Los sensores están aburridos, que honestamente es el mejor escenario." : "No portal detected. The sensors are bored, which is honestly best-case scenario.");
+        return;
+      }
+      const required = ["Glitter Glue", "Motivational Poster", "Portal Checklist"];
+      const missing = required.filter(item => !hasItem(item));
+      if (!state.flags.cloneConvinced) {
+        say(speakerName("Portal Sensors"), state.language === "es" ? "El portal no se estabilizará hasta que tú y el clon acuerden límites. La ciencia rara respeta la comunicación." : "The portal will not stabilize until you and the clone agree on boundaries. Weird science respects communication.");
+        return;
+      }
+      if (missing.length) {
+        say(speakerName("Portal Sensors"), missingPortalSuppliesMessage(missing));
+        return;
+      }
+      if (!state.portalPuzzleSolved) {
+        startPortalPuzzle();
+        return;
+      }
+      removeItem("Glitter Glue");
+      removeItem("Motivational Poster");
+      removeItem("Portal Checklist");
+      addChaos(-35);
+      state.flags.portalStabilized = true;
+      endGame(determineEnding());
+    }
+
+    function startPortalPuzzle() {
+      say(speakerName("Portal Sensors"), fx().portalPuzzlePrompt, [
+        { label: fx().portalChoiceGood, run: () => {
+          state.portalPuzzleSolved = true;
+          addChaos(-8);
+          say(speakerName("Portal Sensors"), fx().portalPuzzleWin);
+          render();
+        }},
+        { label: fx().portalChoiceSilly, run: () => {
+          addChaos(8);
+          say(speakerName("Portal Sensors"), fx().portalPuzzleMiss);
+        }},
+        { label: fx().portalChoiceSnack, run: () => {
+          addChaos(5);
+          addRep(1);
+          say(speakerName("Portal Sensors"), fx().portalPuzzleMiss);
+        }}
+      ]);
+    }
+
+    function determineEnding() {
+      const hasAllCollectibles = collectibleItems.every(hasItem);
+      if (hasAllCollectibles) return pick(["secret", "museum", "sporkDiplomacy"]);
+      if (state.cloneMood >= 2 && state.rep >= 8 && state.debt <= 1) return pick(["goldStar", "mentor"]);
+      if (state.cloneMood >= 1 && state.chaos <= 30) return pick(["good", "quietWin", "studyBuddy"]);
+      if (state.debt === 0 && chance(55)) return "homeworkHero";
+      if (state.cloneMood < 0 || state.chaos > 58) return pick(["messy", "clubPresident", "assembly"]);
+      return pick(["good", "messy", "quietWin"]);
+    }
+
+    function localizedEnding(type) {
+      const packs = {
+        zh: {
+          title: {
+            secret: "隐藏结局：神器社团", museum: "隐藏结局：坏主意小博物馆", sporkDiplomacy: "隐藏结局：叉勺外交", goldStar: "金星结局：可疑地负责任", mentor: "导师结局：克隆社变成学习社", quietWin: "安静胜利结局：其实还不错", studyBuddy: "学习伙伴结局：两个你，一个合理计划", homeworkHero: "作业英雄结局：背包鼓掌", messy: "混乱结局：留堂，但有教育意义", clubPresident: "另类结局：意外社长", assembly: "另类结局：情绪紧急大会", good: "传送门已稳定", maximumChaos: "混乱过载"
+          },
+          body: "传送门终于安静下来。你和克隆人学会了求助、设定边界，并把最糟糕的捷径变成一次奇怪但有用的成长。",
+          stats: () => "作业债：" + state.debt + "/6。声望：" + state.rep + "/10。混乱：" + state.chaos + "/100。",
+          say: "现实啪地合上，像装满橡皮筋的储物柜。你还不是完美，但你更勇敢、更诚实，也更会照顾自己了。"
+        },
+        es: {
+          title: { secret: "Final secreto", museum: "Museo de ideas raras", sporkDiplomacy: "Diplomacia del cuchador", goldStar: "Final estrella dorada", mentor: "Club de estudio", quietWin: "Victoria tranquila", studyBuddy: "Compañeros de estudio", homeworkHero: "Héroe de tarea", messy: "Final desordenado", clubPresident: "Presidencia accidental", assembly: "Asamblea de sentimientos", good: "Portal estabilizado", maximumChaos: "Caos máximo" },
+          body: "El portal por fin se calma. Tú y el clon aprenden a pedir ayuda, poner límites y convertir un atajo terrible en una experiencia rara pero útil.",
+          stats: () => "Deuda De Tarea: " + state.debt + "/6. Reputación: " + state.rep + "/10. Caos: " + state.chaos + "/100.",
+          say: "La realidad se cierra de golpe. No eres perfecto, pero eres más valiente, más honesto y mucho mejor cuidándote."
+        },
+        hi: {
+          title: { secret: "गुप्त अंत", museum: "अजीब विचारों का छोटा संग्रहालय", sporkDiplomacy: "स्पॉर्क कूटनीति", goldStar: "गोल्ड स्टार अंत", mentor: "स्टडी क्लब", quietWin: "शांत जीत", studyBuddy: "स्टडी बडी अंत", homeworkHero: "होमवर्क हीरो", messy: "उलझा हुआ अंत", clubPresident: "अनजाने क्लब अध्यक्ष", assembly: "भावनाओं की सभा", good: "पोर्टल स्थिर", maximumChaos: "कैओस ओवरलोड" },
+          body: "पोर्टल आखिर शांत हो जाता है। तुम और क्लोन मदद मांगना, सीमाएँ बनाना, और खराब शॉर्टकट को अजीब लेकिन उपयोगी सीख में बदलना सीखते हो।",
+          stats: () => "होमवर्क कर्ज: " + state.debt + "/6. प्रतिष्ठा: " + state.rep + "/10. कैओस: " + state.chaos + "/100.",
+          say: "वास्तविकता बंद हो जाती है। तुम परफेक्ट नहीं हो, पर ज्यादा बहादुर, ज्यादा ईमानदार, और अपने साथ ज्यादा नरम हो।"
+        },
+        pt: {
+          title: { secret: "Final secreto", museum: "Museu das ideias ruins", sporkDiplomacy: "Diplomacia do spork", goldStar: "Final estrela dourada", mentor: "Clube de estudos", quietWin: "Vitória tranquila", studyBuddy: "Parceiros de estudo", homeworkHero: "Herói do dever", messy: "Final bagunçado", clubPresident: "Presidência acidental", assembly: "Assembleia de sentimentos", good: "Portal estabilizado", maximumChaos: "Caos máximo" },
+          body: "O portal finalmente se acalma. Você e o clone aprendem a pedir ajuda, criar limites e transformar um atalho péssimo em uma lição estranha, mas útil.",
+          stats: () => "Dívida De Dever: " + state.debt + "/6. Reputação: " + state.rep + "/10. Caos: " + state.chaos + "/100.",
+          say: "A realidade se fecha. Você ainda não é perfeito, mas está mais corajoso, mais honesto e melhor em cuidar de si."
+        },
+        bn: {
+          title: { secret: "গোপন সমাপ্তি", museum: "খারাপ আইডিয়ার ছোট জাদুঘর", sporkDiplomacy: "স্পর্ক কূটনীতি", goldStar: "সোনালি তারকা সমাপ্তি", mentor: "স্টাডি ক্লাব", quietWin: "শান্ত জয়", studyBuddy: "স্টাডি বাডি সমাপ্তি", homeworkHero: "হোমওয়ার্ক নায়ক", messy: "এলোমেলো সমাপ্তি", clubPresident: "হঠাৎ ক্লাব সভাপতি", assembly: "অনুভূতির সভা", good: "পোর্টাল স্থিতিশীল", maximumChaos: "কেওস ওভারলোড" },
+          body: "পোর্টাল অবশেষে শান্ত হয়। তুমি আর ক্লোন সাহায্য চাইতে, সীমা বানাতে, আর খারাপ শর্টকাটকে অদ্ভুত কিন্তু দরকারি শেখায় বদলাতে শেখো।",
+          stats: () => "হোমওয়ার্ক ঋণ: " + state.debt + "/6. সুনাম: " + state.rep + "/10. কেওস: " + state.chaos + "/100.",
+          say: "বাস্তবতা বন্ধ হয়ে যায়। তুমি নিখুঁত নও, কিন্তু আরও সাহসী, আরও সৎ, আর নিজের যত্নে আরও ভালো।"
+        }
+      };
+      return packs[state.language] || null;
+    }
+
+    function gradeText(value, goodThreshold, okayThreshold) {
+      if (value >= goodThreshold) return "A";
+      if (value >= okayThreshold) return "B";
+      return "C+";
+    }
+
+    function renderEndExtras() {
+      const found = collectibleItems.filter(hasItem);
+      const museum = found.length
+        ? "<div class=\"museum-grid\">" + found.map(item => "<span class=\"item-chip\">" + displayItem(item) + "</span>").join("") + "</div>"
+        : "<p>" + fx().noneFound + "</p>";
+      const snackScore = (hasItem("Legendary Spork") ? 2 : 0) + (hasItem("Snack Treaty Receipt") ? 2 : 0) + (hasItem("Emergency Cracker") ? 1 : 0);
+      const boundaryScore = state.cloneMood + (state.flags.cloneConvinced ? 4 : 0);
+      const report = [
+        fx().chaosGrade + ": " + gradeText(100 - state.chaos, 70, 45),
+        fx().snackGrade + ": " + gradeText(snackScore, 3, 1),
+        fx().boundaryGrade + ": " + gradeText(boundaryScore, 5, 2),
+        fx().homeworkGrade + ": " + gradeText(6 - state.debt, 4, 2)
+      ];
+      return "<div class=\"end-extras\"><div class=\"end-extra-block\"><h3>" + fx().museumTitle + "</h3>" + museum + "</div><div class=\"end-extra-block\"><h3>" + fx().reportTitle + "</h3><p>" + report.join("<br>") + "</p></div></div>";
+    }
+
+    function endGame(type) {
+      state.gameOver = true;
+      const ending = document.getElementById("ending");
+      ending.classList.remove("hidden");
+      const localized = localizedEnding(type);
+      if (localized) {
+        ending.innerHTML = "<h2>" + (localized.title[type] || localized.title.good) + "</h2><p>" + localized.body + "</p><p><strong>" + localized.stats() + "</strong></p>" + renderEndExtras();
+        say("Narrator", localized.say);
+        return;
+      }
+      if (type === "secret") {
+        ending.innerHTML = "<h2>Secret Ending: Artifact Club</h2><p>You stabilize the portal and somehow preserve every weird school artifact: the sticker, spork, printer page, calculator battery, and impossible cheese puff. The clone suggests a museum. The principal approves, mostly because it keeps everyone away from the machine.</p><p><strong>Ending:</strong> Collector Of Questionable Objects. Homework Debt: " + state.debt + "/6. Reputation: " + state.rep + "/10.</p>";
+        say("Narrator", "The portal closes, the artifacts glow, and your backpack becomes historically significant in a way no one can explain.");
+      } else if (type === "museum") {
+        ending.innerHTML = "<h2>Secret Ending: The Tiny Museum Of Bad Ideas</h2><p>You turn every strange artifact into a hallway exhibit. Students whisper reverently at the impossible cheese puff. Your clone becomes docent, using a laser pointer with alarming dignity.</p><p><strong>Ending:</strong> Curator Of Courageous Weirdness. Reputation: " + state.rep + "/10.</p>";
+        say("Narrator", "The principal calls it educational. You call it proof that odd little things can become oddly wonderful.");
+      } else if (type === "sporkDiplomacy") {
+        ending.innerHTML = "<h2>Secret Ending: Spork Diplomacy</h2><p>The Legendary Spork negotiates peace between you, your clone, and the Dimension of Unfinished Assignments. Nobody understands the treaty, but everyone feels snack-adjacent hope.</p><p><strong>Ending:</strong> Ambassador Of Reasonably Clean Lunch Utensils.</p>";
+        say("Narrator", "The portal bows politely. You learn that leadership can look like listening, apologizing, and occasionally waving a spork.");
+      } else if (type === "goldStar") {
+        ending.innerHTML = "<h2>Gold Star Ending: Suspiciously Responsible</h2><p>You close the portal, help your clone set boundaries, and finish enough homework that the printer sheds one proud toner tear. This is still weird science, but now it has a planner.</p><p><strong>Ending:</strong> Chaos Tamer. Homework Debt: " + state.debt + "/6.</p>";
+        say("Narrator", "A gold star appears on your sleeve. It is probably not regulation, but you earned it.");
+      } else if (type === "mentor") {
+        ending.innerHTML = "<h2>Mentor Ending: Clone Club Becomes Study Club</h2><p>Your clone stops trying to replace you and starts helping classmates break big tasks into smaller ones. The vending machine prints encouragement receipts. Nobody questions it because morale is up.</p><p><strong>Ending:</strong> Tiny Steps, Big Weird Win.</p>";
+        say("Narrator", "You did not become perfect. You became braver about asking, trying, and trying again. Huge upgrade.");
+      } else if (type === "quietWin") {
+        ending.innerHTML = "<h2>Quiet Win Ending: Pretty Okay, Actually</h2><p>The portal closes without fireworks. Your clone returns your calendar, your backpack stops humming, and you realize a manageable day can still count as a victory.</p><p><strong>Ending:</strong> Peaceful Enough For Tuesday. Chaos: " + state.chaos + "/100.</p>";
+        say("Narrator", "No parade. No trophy. Just a steadier breath and one less impossible thing. That counts.");
+      } else if (type === "studyBuddy") {
+        ending.innerHTML = "<h2>Study Buddy Ending: Two Yous, One Reasonable Plan</h2><p>You and the clone make a rule: help is allowed, replacement is not. Then you both make flashcards so aggressively the Dimension of Unfinished Assignments files a complaint.</p><p><strong>Ending:</strong> Boundaries With Index Cards.</p>";
+        say("Narrator", "The clone high-fives you with perfect form. It is unsettling, but supportive.");
+      } else if (type === "homeworkHero") {
+        ending.innerHTML = "<h2>Homework Hero Ending: The Backpack Applauds</h2><p>You somehow clear your Homework Debt before reality finishes wobbling. Your clone is impressed. The backpack gives a tiny zipper-based standing ovation.</p><p><strong>Ending:</strong> Finished Enough To Rest.</p>";
+        say("Narrator", "You learn the secret prize for finishing work: not more work, but a moment to breathe. Revolutionary.");
+      } else if (type === "messy") {
+        ending.innerHTML = "<h2>Messy Ending: Detention, But Educational</h2><p>You close the portal, but the clone has already overcommitted both of you to announcements, robotics, and a hallway clean-up committee. You get detention, a reflection essay, and a grudging sense that teamwork requires boundaries.</p><p><strong>Ending:</strong> Everyone Learns Something, Unfortunately. Chaos: " + state.chaos + "/100.</p>";
+        say("Narrator", "The portal closes, but a clipboard appears in your hands. It says: 'Reflection Essay: Why I Should Not Outsource My Entire Life.'");
+      } else if (type === "clubPresident") {
+        ending.innerHTML = "<h2>Alternate Ending: Accidental Club President</h2><p>The portal closes, but your clone has already founded Clone Club, Anti-Clone Club, and a committee to rename committees. You become president by being the only one who admits confusion.</p><p><strong>Ending:</strong> Leadership Through Mild Panic.</p>";
+        say("Narrator", "You stand at the podium and say, 'We will figure this out one meeting at a time.' Weirdly, everyone claps.");
+      } else if (type === "assembly") {
+        ending.innerHTML = "<h2>Alternate Ending: Emergency Assembly Of Feelings</h2><p>The school holds an assembly about responsibility, portals, and why glitter glue needs adult supervision. It is awkward, but nobody laughs when you say you were overwhelmed.</p><p><strong>Ending:</strong> Honest Is Better Than Perfect.</p>";
+        say("Narrator", "The microphone squeaks. You keep talking anyway. That might be the bravest move in the whole game.");
+      } else if (type === "good") {
+        ending.innerHTML = "<h2>Portal Stabilized</h2><p>You patch reality with glitter glue, a motivational poster, and the kind of teamwork adults keep talking about. Your clone agrees to become a study buddy instead of a replacement.</p><p><strong>Ending:</strong> Responsible Weird Science. Homework Debt: " + state.debt + "/6. Reputation: " + state.rep + "/10.</p>";
+        say("Narrator", "The portal snaps shut with a sound like a locker full of rubber bands. You still have homework, but now you also have boundaries.");
+      } else {
+        ending.innerHTML = "<h2>Chaos Overload</h2><p>The school enters emergency assembly mode. Your clone is elected to three clubs, the vending machine becomes a guidance counselor, and the portal starts assigning essays.</p><p><strong>Ending:</strong> Try Again With Fewer Shortcuts.</p>";
+        say("Narrator", "The Chaos Meter maxed out. The good news: you learned something. The bad news: it may be on the quiz.");
+      }
+      ending.innerHTML += renderEndExtras();
+    }
+
+    function render() {
+      applyStaticLanguage();
+      const room = rooms[state.room];
+      const props = roomProps(state.room);
+      document.getElementById("roomTitle").textContent = roomTitle(state.room);
+      document.getElementById("sceneCard").style.background = room.color;
+      document.getElementById("propA").querySelector(".prop-label").textContent = props[0];
+      document.getElementById("propB").querySelector(".prop-label").textContent = props[1];
+      document.getElementById("propC").querySelector(".prop-label").textContent = props[2];
+      ["propA", "propB", "propC"].forEach((id, index) => {
+        const prop = document.getElementById(id);
+        const action = room.actions[index];
+        prop.disabled = state.gameOver || !action;
+        prop.setAttribute("aria-label", action ? actionLabel(action.label) : props[index]);
+        prop.onclick = () => action ? runAction(action) : say(speakerName("Narrator"), t().nothingUseful);
+      });
+      document.getElementById("portalVisual").classList.toggle("hidden", !(state.portalOpen && (state.room === "stemLab" || state.room === "dimension")));
+      document.getElementById("cloneVisual").classList.toggle("visible", state.cloneActive && (state.room === "stemLab" || state.room === "dimension"));
+      renderNpcVisual("npcVisualA", (room.npcs || [])[0], "npc-left");
+      renderNpcVisual("npcVisualB", (room.npcs || [])[1], "npc-right");
+
+      const actions = document.getElementById("actions");
+      actions.innerHTML = "";
+      room.actions.forEach(action => {
+        const button = document.createElement("button");
+        button.className = "small-button";
+        button.type = "button";
+        button.textContent = actionLabel(action.label);
+        button.disabled = state.gameOver;
+        button.addEventListener("click", () => runAction(action));
+        actions.appendChild(button);
+      });
+
+      const npcs = document.getElementById("npcs");
+      npcs.innerHTML = "";
+      (room.npcs || []).forEach(npc => {
+        const button = document.createElement("button");
+        button.className = "small-button";
+        button.type = "button";
+        button.textContent = npcName(npc.name) + " - " + npcRole(npc.role);
+        button.disabled = state.gameOver;
+        button.addEventListener("click", npc.talk);
+        npcs.appendChild(button);
+      });
+
+      const exits = document.getElementById("exits");
+      exits.innerHTML = "";
+      room.exits.forEach(exitKey => {
+        const button = document.createElement("button");
+        button.className = "small-button";
+        button.type = "button";
+        button.textContent = roomTitle(exitKey);
+        button.disabled = state.gameOver;
+        button.addEventListener("click", () => go(exitKey));
+        exits.appendChild(button);
+      });
+
+      const inventory = document.getElementById("inventory");
+      inventory.innerHTML = "";
+      if (!state.inventory.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-note";
+        empty.textContent = t().emptyBackpack;
+        inventory.appendChild(empty);
+      } else {
+        state.inventory.forEach(item => {
+          const chip = document.createElement("span");
+          chip.className = "item-chip";
+          chip.textContent = displayItem(item);
+          inventory.appendChild(chip);
+        });
+      }
+
+      renderQuests();
+      renderEventAndFriends();
+      updateMeters();
+    }
+
+    function renderEventAndFriends() {
+      document.getElementById("eventNote").textContent = fx().events[state.schoolEvent] || fx().events.none;
+      const list = document.getElementById("friendList");
+      list.innerHTML = "";
+      const entries = Object.entries(state.affinity);
+      if (!entries.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-note";
+        empty.textContent = fx().noBonds;
+        list.appendChild(empty);
+        return;
+      }
+      entries
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 4)
+        .forEach(([name, score]) => {
+          const row = document.createElement("div");
+          row.className = "friend-row";
+          const who = document.createElement("span");
+          who.textContent = npcName(name);
+          const bond = document.createElement("span");
+          bond.textContent = fx().bondLabel(score);
+          row.appendChild(who);
+          row.appendChild(bond);
+          list.appendChild(row);
+        });
+    }
+
+    function renderQuests() {
+      const questList = document.getElementById("questList");
+      questList.innerHTML = "";
+      questSteps.forEach((step, index) => {
+        const item = document.createElement("li");
+        const done = step.done();
+        item.className = done ? "done" : "";
+        item.textContent = (done ? t().done : t().todo) + questLabel(index, step.label);
+        questList.appendChild(item);
+      });
+      const found = collectibleItems.filter(hasItem).length;
+      document.getElementById("collectiblesNote").textContent = t().artifacts(found);
+    }
+
+    function updateMeters() {
+      document.getElementById("chaosNumber").textContent = state.chaos + "/100";
+      document.getElementById("chaosFill").style.width = state.chaos + "%";
+      document.getElementById("debtNumber").textContent = state.debt + "/6";
+      document.getElementById("debtFill").style.width = (state.debt / 6 * 100) + "%";
+      document.getElementById("repNumber").textContent = state.rep + "/10";
+      document.getElementById("repFill").style.width = (state.rep / 10 * 100) + "%";
+      const moodLabel = !state.cloneActive ? t().notCreated : state.cloneMood < 0 ? t().tooEfficient : state.cloneMood > 1 ? t().helpful : t().unstable;
+      document.getElementById("cloneMoodLabel").textContent = moodLabel;
+      document.getElementById("cloneMoodFill").style.width = state.cloneActive ? ((state.cloneMood + 4) / 8 * 100) + "%" : "0%";
+    }
+
+    installExtraLanguagePacks();
+    applyStaticLanguage();
+    render();
+  </script>
+</body>
+</html>
